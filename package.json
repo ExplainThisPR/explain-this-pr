@@ -12,7 +12,6 @@
   },
   "eslintConfig": {
     "extends": [
-      "plugin:adonis/typescriptApp",
       "prettier"
     ],
     "plugins": [
@@ -29,7 +28,7 @@
   ],
   "prettier": {
     "trailingComma": "es5",
-    "semi": false,
+    "semi": true,
     "singleQuote": true,
     "useTabs": false,
     "quoteProps": "consistent",

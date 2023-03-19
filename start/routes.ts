@@ -18,8 +18,16 @@
 |
 */
 
-import Route from '@ioc:Adonis/Core/Route'
+import { HttpContext } from '@adonisjs/core/build/standalone';
+import Route from '@ioc:Adonis/Core/Route';
 
 Route.get('/', async () => {
-  return { hello: 'world' }
-})
+  return { hello: 'world' };
+});
+
+Route.post('/webhook', async ({ request }: HttpContext) => {
+  console.log(request.body());
+  return {
+    message: 'Well, done!',
+  };
+});
