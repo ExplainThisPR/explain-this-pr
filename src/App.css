@@ -10,6 +10,7 @@ html {
     #faaca8,
     #ddd6f3
   ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  padding-bottom: 30px;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
     'Noto Sans', 'Liberation Sans', Arial, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
@@ -18,9 +19,19 @@ html {
   color: #212529;
 }
 
+.page-container {
+  padding: 50px 32px;
+}
+
 .font-mono {
   font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
+}
+
+.social-icon {
+  color: #282c34;
+  width: 50px;
+  margin: 0 10px;
 }
 
 .App {
