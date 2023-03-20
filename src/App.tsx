@@ -10,6 +10,7 @@ function App() {
         theme={{
           token: {
             fontSize: 16,
+            colorPrimary: '#ab74e6',
           },
         }}
       >
