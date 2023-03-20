@@ -5,9 +5,10 @@ import App from './App';
 import { auth } from './firebase';
 import ErrorPage from './pages/ErrorPage/ErrorPage';
 import LandingPage from './pages/LandingPage/LandingPage';
+import Success from './pages/Success/Success';
 
 type Props = {
-  children: React.ReactNode;
+  children: React.ReactElement;
 };
 const RestrictAuth = ({ children }: Props) => {
   const location = useLocation();
@@ -49,15 +50,15 @@ const router = createBrowserRouter([
         path: '/',
         element: <LandingPage />,
       },
-      /*
       {
-        path: '/login',
+        path: '/signup-success',
         element: (
           <RestrictGuest>
-            <Auth />
+            <Success />
           </RestrictGuest>
         ),
       },
+      /*
       {
         path: '/code-verify',
         element: (

@@ -79,6 +79,7 @@ export default function SignUpModal({ open, onClose }: Props) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
+      localStorage.setItem('user', JSON.stringify(userDoc));
       subscribe(planKey, data.user.email || '');
     } catch (error) {
       message.warning('Something went wrong signing up! Please try again.');
