@@ -121,7 +121,6 @@ export const githubWebhook = https.onRequest(async (request, response) => {
 
   const body = request.body;
   logger.log({ action: body.action });
-
   let repoName = '';
   let repoOwner = '';
   let pullNumber = 0;
@@ -133,9 +132,22 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     if (!fetched) {
       return;
     }
+    const success = await validateRepoCountLimit(
+      fetched.repoName,
+      fetched.repoOwner,
+      fetched.pullNumber,
+      fetched.octokit,
+    );
+    if (!success) {
+      response.status(400).send({
+        message:
+          'Failed to validate subscription level. Please contact support.',
+      });
+    }
     content = fetched.data;
     repoName = fetched.repoName;
     repoOwner = fetched.repoOwner;
+    pullNumber = fetched.pullNumber;
     octokit = fetched.octokit;
   } else if (body.diff_body) {
     const validated = await validateDiffFormat(body.diff_body);
@@ -159,6 +171,25 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   const chunks = Github.breakFilesIntoChunks(filestoAnalyze);
   logger.info(`Number of chunks to send: ${chunks.length}`);
   logger.info(filenames);
+
+  const totalChanges = filestoAnalyze.reduce(
+    (acc, file) => acc + file.changes,
+    0,
+  );
+  const locLimit = await validateCodeLimit(
+    totalChanges,
+    repoName,
+    repoOwner,
+    pullNumber,
+    octokit,
+  );
+
+  if (!locLimit) {
+    response.status(400).send({
+      message:
+        'You have exceeded your lines of code monthly limit. Please upgrade your subscription.',
+    });
+  }
 
   let responses = await Promise.all(
     chunks.map(async (chunk) => {
@@ -263,6 +294,7 @@ async function fetchDiff(request: Request, response: Response) {
   });
   return {
     data: data.data,
+    pullNumber,
     octokit,
     repoName,
     repoOwner,
@@ -333,3 +365,98 @@ async function getSummaryForPR(content: string) {
     return null;
   }
 }
+
+async function validateRepoCountLimit(
+  repoName: string,
+  repoOwner: string,
+  pullNumber: number,
+  octokit: Octokit,
+) {
+  /*
+  Find the user who owns the repo
+  Count the length of subs[] they have vs. the limit
+  If over, throw an error to end the request
+*/
+  try {
+    const query = await firestore()
+      .collection('Users')
+      .where(
+        'repos',
+        'array-contains',
+        `${repoOwner}/${repoName}`.toLowerCase(),
+      )
+      .get();
+    if (query.empty) {
+      return false;
+    }
+    const user = query.docs[0].data();
+    const { repos_limit } = user.usage;
+
+    if (user.repos.length > repos_limit) {
+      await octokit.rest.issues.createComment({
+        owner: repoOwner,
+        repo: repoName,
+        issue_number: pullNumber,
+        body: [
+          `You have reached the limit of ${repos_limit} repos.`,
+          `Please remove a repo from your account to resume the service.`,
+        ].join('\n'),
+      });
+      return false;
+    }
+    return true;
+  } catch (e) {
+    logger.error('Failed to validate subscription level', e);
+    return false;
+  }
+}
+
+async function validateCodeLimit(
+  LOC: number,
+  repoName: string,
+  repoOwner: string,
+  pullNumber: number,
+  octokit: Octokit | null,
+) {
+  /*
+  Find the user who owns the repo
+  Count the length of subs[] they have vs. the limit
+  If over, throw an error to end the request
+*/
+  try {
+    const query = await firestore()
+      .collection('Users')
+      .where(
+        'repos',
+        'array-contains',
+        `${repoOwner}/${repoName}`.toLowerCase(),
+      )
+      .get();
+    if (query.empty) {
+      return false;
+    }
+    const user = query.docs[0].data();
+    const { loc_limit } = user.usage;
+
+    if (LOC >= loc_limit) {
+      await octokit?.rest.issues.createComment({
+        owner: repoOwner,
+        repo: repoName,
+        issue_number: pullNumber,
+        body: [
+          `You have reached the limit of ${loc_limit} lines of code for this month.`,
+          `Wait until the next month to resume the service or upgrade your subscription.`,
+        ].join('\n'),
+      });
+      return false;
+    }
+    return true;
+  } catch (e) {
+    logger.error('Failed to validate subscription level', e);
+    return false;
+  }
+}
+/*
+When a user is created, save their limits on their account
+When a new repo is connected/removed to the app, find the user it belongs to and update their limits
+*/

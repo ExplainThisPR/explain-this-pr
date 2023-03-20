@@ -90,6 +90,7 @@ export default function SignUpModal({ open, onClose }: Props) {
         photoURL: data.user.photoURL,
         githubId: data.user.providerData[0].uid,
         plan: planKey,
+        repos: [],
         usage: {
           repos: 0,
           loc: 0,
