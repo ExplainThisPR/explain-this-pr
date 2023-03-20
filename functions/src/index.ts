@@ -61,7 +61,31 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
       session.payment_status === 'paid' ||
       session.payment_status === 'no_payment_required'
     ) {
+      const getLimits = () => {
+        const userDoc = user.data();
+        const usage = userDoc.usage || {};
+        if (userDoc.plan === 'starter') {
+          return {
+            ...usage,
+            repos_limit: 4,
+            loc_limit: 100000,
+          };
+        } else if (userDoc.plan === 'pro') {
+          return {
+            ...usage,
+            repos_limit: 30,
+            loc_limit: 800000,
+          };
+        } else {
+          return {
+            ...usage,
+            repos_limit: 1,
+            loc_limit: 25000,
+          };
+        }
+      };
       await user.ref.update({
+        usage: getLimits(),
         stripe: {
           subscription: {
             id: subscription,
