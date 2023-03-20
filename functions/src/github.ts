@@ -8,7 +8,7 @@ const appId = config().github.app_id;
 const privateKey = config().github.private_key;
 const gh = new App({ appId, privateKey });
 
-type PullRequestFiles =
+export type PullRequestFiles =
   RestEndpointMethodTypes['pulls']['listFiles']['response']['data'];
 
 export default class Github {

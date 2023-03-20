@@ -1,7 +1,8 @@
-import { https, logger, config } from 'firebase-functions';
-import Github from './github';
+import { https, logger, config, Response, Request } from 'firebase-functions';
+import Github, { PullRequestFiles } from './github';
 import { PullRequestLabeledEvent } from '@octokit/webhooks-types';
 import { Configuration, OpenAIApi } from 'openai';
+import { Octokit } from 'octokit';
 
 const apiKey = config().openai.api_key;
 const configuration = new Configuration({
@@ -13,6 +14,94 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   const body = request.body;
   logger.log({ action: body.action });
 
+  let repoName = '';
+  let repoOwner = '';
+  let pullNumber = 0;
+  let octokit: Octokit | null = null;
+  let content: PullRequestFiles = [];
+
+  if (body.action) {
+    const fetched = await fetchDiff(request, response);
+    if (!fetched) {
+      return;
+    }
+    content = fetched.data;
+    repoName = fetched.repoName;
+    repoOwner = fetched.repoOwner;
+    octokit = fetched.octokit;
+  } else if (body.diff_body) {
+    const validated = await validateDiffFormat(body.diff_body);
+    if (!validated) {
+      response.status(400).send({
+        message:
+          'The diff provided is not valid. Did you run the command properly?',
+      });
+      return;
+    }
+    content = JSON.parse(body.diff_body);
+  } else {
+    response.status(400).send({
+      message: 'No sources provided to analyze Github files.',
+    });
+    return;
+  }
+
+  const filestoAnalyze = Github.filterOutFiltersToAnalyze(content);
+  const filenames = filestoAnalyze.map((file) => file.filename);
+  const chunks = Github.breakFilesIntoChunks(filestoAnalyze);
+  logger.info(`Number of chunks to send: ${chunks.length}`);
+  logger.info(filenames);
+
+  let responses = await Promise.all(
+    chunks.map(async (chunk) => {
+      const combined = JSON.stringify(chunk);
+      if (combined.length < 100) {
+        return '';
+      }
+
+      const gpt = await getSummaryForPR(combined);
+      const message = gpt?.choices[0].message?.content;
+      return message || '';
+    }),
+  );
+
+  if (responses.length === 0) {
+    console.error('No responses from GPT');
+    responses = [
+      'No changes to analyze. Something likely went wrong. :thinking_face: We will look into it!',
+      'Sometimes re-running the analysis helps with timeout issues. :shrug:',
+    ];
+  }
+
+  logger.info('Adding a comment to the PR..');
+  const prefix = [
+    '## :robot: Explain this PR :robot:',
+    'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
+    'Please [share your feedback](url) with me. :heart:',
+  ];
+  const comment = [...prefix, ...responses].join('\n');
+  try {
+    if (octokit) {
+      await octokit.rest.issues.createComment({
+        owner: repoOwner,
+        repo: repoName,
+        issue_number: pullNumber,
+        body: comment,
+      });
+      logger.debug('Comment added to the PR:', { comment });
+    }
+  } catch (e: any) {
+    const error = e?.response?.data || e;
+    logger.error('Failed to create comment', error);
+  }
+
+  response.send({
+    message: 'Well, done!',
+  });
+});
+
+async function fetchDiff(request: Request, response: Response) {
+  const body = request.body;
   const signature = request.header('x-hub-signature-256');
   const signatureGood = Github.verifySignature(
     JSON.stringify(body),
@@ -58,58 +147,35 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     repo: repoName,
     pull_number: pullNumber,
   });
+  return {
+    data: data.data,
+    octokit,
+    repoName,
+    repoOwner,
+  };
+}
 
-  const filestoAnalyze = Github.filterOutFiltersToAnalyze(data.data);
-  const filenames = filestoAnalyze.map((file) => file.filename);
-  const chunks = Github.breakFilesIntoChunks(filestoAnalyze);
-  logger.info(`Number of chunks to send: ${chunks.length}`);
-  logger.info(filenames);
-
-  let responses = await Promise.all(
-    chunks.map(async (chunk) => {
-      const combined = JSON.stringify(chunk);
-      if (combined.length < 100) {
-        return '';
-      }
-
-      const gpt = await getSummaryForPR(combined);
-      const message = gpt?.choices[0].message?.content;
-      return message || '';
-    }),
-  );
-
-  if (responses.length === 0) {
-    console.error('No responses from GPT');
-    responses = [
-      'No changes to analyze. Something likely went wrong. :thinking_face: We will look into it!',
-      'Sometimes re-running the analysis helps with timeout issues. :shrug:',
-    ];
-  }
-
-  logger.info('Adding a comment to the PR..');
-  const prefix = [
-    '## :robot: Explain this PR :robot:',
-    'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
-    'Please [share your feedback](url) with me. :heart:',
-  ];
-  const comment = [...prefix, ...responses].join('\n');
+/**
+ * Validate if the content is in the correct format of PullRequestFiles
+ * @param content The content to validate
+ * @returns
+ */
+async function validateDiffFormat(content: string) {
   try {
-    await octokit.rest.issues.createComment({
-      owner: repoOwner,
-      repo: repoName,
-      issue_number: pullNumber,
-      body: comment,
-    });
-    logger.debug('Comment added to the PR:', { comment });
-  } catch (e: any) {
-    const error = e?.response?.data || e;
-    logger.error('Failed to create comment', error);
-  }
+    const parsed = JSON.parse(content) as PullRequestFiles;
+    const first = parsed[0];
+    if (!first || !first.filename || !first.status || !first.changes) {
+      return false;
+    }
 
-  response.send({
-    message: 'Well, done!',
-  });
-});
+    if (parsed.length === 0) {
+      return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 async function getSummaryForPR(content: string) {
   try {
