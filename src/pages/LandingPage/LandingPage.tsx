@@ -8,6 +8,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import './LandingPage.css';
 import { db } from '../../firebase';
 import SignUpModal from '../../components/SignUpModal';
+import { getAnalytics, logEvent } from 'firebase/analytics';
 
 type PublicData = {
   last_run_at: string;
@@ -39,6 +40,14 @@ function LandingPage() {
       message.error('Your request failed. Please try again');
     }
   };
+  const openSignupButton = () => {
+    setShowSignupModal(true);
+    const analytics = getAnalytics();
+    logEvent(analytics, 'get_extension_click', {
+      method: 'landing_page',
+    });
+  };
+
   React.useEffect(() => {
     const unsub = onSnapshot(doc(db, 'AdminDashboard', 'public'), (doc) => {
       if (doc.exists()) {
@@ -60,11 +69,7 @@ function LandingPage() {
     <div className="page-container">
       <header>
         <Col span={4}>
-          <Button
-            size="large"
-            type="primary"
-            onClick={() => setShowSignupModal(true)}
-          >
+          <Button size="large" type="primary" onClick={openSignupButton}>
             Get GitHub Integration
           </Button>
         </Col>

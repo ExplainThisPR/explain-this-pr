@@ -9,6 +9,7 @@ import {
   message,
   Divider,
 } from 'antd';
+import { getAnalytics, logEvent } from 'firebase/analytics';
 import { getAuth, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import React from 'react';
@@ -57,8 +58,23 @@ export default function SignUpModal({ open, onClose }: Props) {
       navigate('/signup-success');
     }
   };
+  const trackSignupStart = (planKey: string) => {
+    const analytics = getAnalytics();
+    logEvent(analytics, 'attempt_signup', {
+      planKey,
+      method: 'github',
+    });
+  };
+  const trackSignupSuccess = (planKey: string) => {
+    const analytics = getAnalytics();
+    logEvent(analytics, 'signup_success', {
+      planKey,
+      method: 'github',
+    });
+  };
   const onSignUp = async (planKey: string) => {
     try {
+      trackSignupStart(planKey);
       const provider = new GithubAuthProvider();
       provider.addScope('read:user');
       provider.addScope('user:email');
@@ -84,6 +100,7 @@ export default function SignUpModal({ open, onClose }: Props) {
         updatedAt: new Date().toISOString(),
       });
       localStorage.setItem('user', JSON.stringify(userDoc));
+      trackSignupSuccess(planKey);
       subscribe(planKey, data.user.email || '');
     } catch (error) {
       message.warning('Something went wrong signing up! Please try again.');
