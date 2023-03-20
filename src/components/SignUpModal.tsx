@@ -50,13 +50,14 @@ export default function SignUpModal({ open, onClose }: Props) {
   const subscribe = (planKey: string, userEmail: string) => {
     const url = stripeCheckoutUrls[planKey];
     if (url) {
-      window.location.href = `${url}?prefill_email=${userEmail}`;
+      window.location.href = `${url}?prefilled_email=${userEmail}`;
     }
   };
   const onSignUp = async (planKey: string) => {
     try {
       const provider = new GithubAuthProvider();
       provider.addScope('read:user');
+      provider.addScope('user:email');
       const auth = getAuth();
       const data = await signInWithPopup(auth, provider);
       // Create a user document in the User collection
@@ -67,6 +68,7 @@ export default function SignUpModal({ open, onClose }: Props) {
         email: data.user.email,
         name: data.user.displayName,
         photoURL: data.user.photoURL,
+        githubId: data.user.providerData[0].uid,
         plan: planKey,
         usage: {
           repos: 0,
