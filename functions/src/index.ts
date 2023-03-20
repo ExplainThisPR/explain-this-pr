@@ -3,6 +3,7 @@ import Github, { PullRequestFiles } from './github';
 import { PullRequestLabeledEvent } from '@octokit/webhooks-types';
 import { Configuration, OpenAIApi } from 'openai';
 import { Octokit } from 'octokit';
+import { allowCors } from './helper';
 
 const apiKey = config().openai.api_key;
 const configuration = new Configuration({
@@ -11,6 +12,9 @@ const configuration = new Configuration({
 const OpenAI = new OpenAIApi(configuration);
 
 export const githubWebhook = https.onRequest(async (request, response) => {
+  const isPreflight = allowCors(request, response);
+  if (isPreflight) return;
+
   const body = request.body;
   logger.log({ action: body.action });
 
