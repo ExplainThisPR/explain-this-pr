@@ -77,16 +77,23 @@ export const githubWebhook = https.onRequest(async (request, response) => {
 
   if (body.action === 'labeled') {
     logger.info('Adding a comment to the PR..');
+    const prefix = [
+      '## :robot: Explain this PR :robot:',
+      'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
+      'Please [share your feedback](url) with me. :heart:',
+    ];
+    const comment = [...prefix, ...responses].join('\n');
     try {
       await octokit.rest.issues.createComment({
         owner: repoOwner,
         repo: repoName,
         issue_number: pullNumber,
-        body: 'I am working on it!',
+        body: comment,
       });
+      logger.debug('Comment added to the PR:', { comment });
     } catch (e: any) {
       const error = e?.response?.data || e;
-      console.error('Failed to create comment', error);
+      logger.error('Failed to create comment', error);
     }
   }
 
@@ -123,14 +130,14 @@ async function getSummaryForPR(content: string) {
         { role: 'user', content },
       ],
     });
-    console.log('GPT Response: ', {
+    logger.debug('GPT Response: ', {
       usage: data.usage,
       content: data.choices[0],
     });
     return data;
   } catch (err: any) {
     const error = err?.response?.data || err;
-    console.error('Failed to make GPT request', error);
+    logger.error('Failed to make GPT request', error);
     return null;
   }
 }
