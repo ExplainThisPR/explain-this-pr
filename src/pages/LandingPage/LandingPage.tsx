@@ -26,8 +26,7 @@ function LandingPage() {
     try {
       setLoading(true);
       const URL =
-        'http://localhost:5001/explain-this-pr/us-central1/githubWebhook';
-      //'https://us-central1-explain-this-pr.cloudfunctions.net/githubWebhook';
+        'https://us-central1-explain-this-pr.cloudfunctions.net/githubWebhook';
       const { data } = await axios.post(URL, {
         diff_body: diff,
       });
