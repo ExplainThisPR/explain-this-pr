@@ -23,4 +23,5 @@ export default Env.rules({
   NODE_ENV: Env.schema.enum(['development', 'production', 'test'] as const),
   GITHUB_APP_ID: Env.schema.string(),
   GITHUB_APP_PRIVATE_KEY: Env.schema.string(),
+  CHAT_PROMPT: Env.schema.string(),
 });
