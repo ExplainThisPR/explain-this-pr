@@ -60,7 +60,11 @@ function LandingPage() {
     <div className="page-container">
       <header>
         <Col span={4}>
-          <Button size="large" type="primary" onClick={() => setShowSignupModal(true)}>
+          <Button
+            size="large"
+            type="primary"
+            onClick={() => setShowSignupModal(true)}
+          >
             Get GitHub Integration
           </Button>
         </Col>
@@ -97,7 +101,7 @@ function LandingPage() {
         <Col span={18}>
           <Input.TextArea
             className="textarea font-mono"
-            placeholder="Paste the response from the pull/{id}/files API call here"
+            placeholder="Paste the response from the pulls/{id}/files API call here"
             autoSize={{ minRows: 10, maxRows: 20 }}
             onChange={(e) => setDiff(e.target.value)}
             value={diff}
