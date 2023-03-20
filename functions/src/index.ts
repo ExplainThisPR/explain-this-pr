@@ -1,5 +1,5 @@
 import { https, logger, config, Response, Request } from 'firebase-functions';
-import { firestore } from 'firebase-admin';
+import { initializeApp, firestore } from 'firebase-admin';
 import Github, { PullRequestFiles } from './github';
 import { PullRequestLabeledEvent } from '@octokit/webhooks-types';
 import { Configuration, OpenAIApi } from 'openai';
@@ -17,6 +17,8 @@ const stripeEndpointSecret = config().stripe.webhook_secret;
 const stripe = new Stripe(stripeKey, {
   apiVersion: '2022-11-15',
 });
+
+initializeApp();
 
 export const stripeWebhook = https.onRequest(async (request, response) => {
   const sig = request.header('stripe-signature') || '';
@@ -121,6 +123,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
 
   const body = request.body;
   logger.log({ action: body.action });
+
   let repoName = '';
   let repoOwner = '';
   let pullNumber = 0;
@@ -283,28 +286,31 @@ async function fetchDiff(request: Request, response: Response) {
     body.action === 'added' &&
     (body.repositories_added?.length || 0) > 0
   ) {
-    const payload = body as any;
+    console.log('repo added. Saving to db..');
     const newRepoName = body.repositories_added[0].full_name;
     const success = await repoAdded(body.sender.id, newRepoName);
-    if (!success) {
-      response.status(400).send({
-        message:
-          'Failed to validate subscription level. Please contact support.',
-      });
-      return;
-    }
-
-    installationId = payload.installation?.id || 0;
-    repoName = payload.repository.name;
-    repoOwner = payload.repository.owner.login;
-    pullNumber = payload.pull_request.number;
+    const message = !success
+      ? 'Failed to validate subscription level. Please contact support.'
+      : 'Successfully added the repository to your account.';
+    const status = !success ? 400 : 200;
+    response.status(status).send({
+      message,
+    });
+    return;
   } else if (
     body.action === 'removed' &&
     (body.repositories_removed?.length || 0) > 0
   ) {
+    console.log('repo removed. Updating the db..');
     const deletedRepoName = body.repositories_removed[0].full_name;
     await repoRemoved(body.sender.id, deletedRepoName);
+    const message = 'Successfully removed the repository from your account.';
+    response.send({
+      message,
+    });
+    return;
   } else {
+    console.log('Bad action request. Ignoring..');
     response.send({
       message: 'Nothing for me to do.',
     });
@@ -526,7 +532,7 @@ async function repoRemoved(githubId: string, repoName: string) {
       .where('githubId', '==', githubId)
       .get();
     if (query.empty) {
-      return false;
+      return;
     }
     const user = query.docs[0].data();
 
