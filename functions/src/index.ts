@@ -216,9 +216,8 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   const prefix = [
     '## :robot: Explain this PR :robot:',
     'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
-    'Please [share your feedback](url) with me. :heart:',
+    'Please [share your feedback](https://tally.so/r/3jZG9E) with me. :heart:',
   ];
-  const comment = [...prefix, ...responses].join('\n');
   if (responses.length === 0) {
     console.error('No responses from GPT');
     responses = [
@@ -227,31 +226,27 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     ];
   }
 
-  logger.info('Adding a comment to the PR..');
+  const comment = [...prefix, ...responses].join('\n');
+
   try {
     if (octokit) {
+      logger.info('Adding a comment to the PR..');
       await octokit.rest.issues.createComment({
         owner: repoOwner,
         repo: repoName,
         issue_number: pullNumber,
         body: comment,
       });
-      logger.debug('Comment added to the PR:', { comment });
+      logger.info('Comment added to the PR:', { comment });
     }
   } catch (e: any) {
     const error = e?.response?.data || e;
     logger.error('Failed to create comment', error);
   }
 
-  if (body.diff_body) {
-    response.send({
-      comment,
-    });
-  } else {
-    response.send({
-      message: 'Well, done!',
-    });
-  }
+  response.send({
+    comment,
+  });
 });
 
 async function fetchDiff(request: Request, response: Response) {
@@ -378,7 +373,7 @@ async function getSummaryForPR(content: string) {
       - Setup a listener for the AuthState of the user and update the Redux store with the current user
 
     `;
-    logger.debug('GPT Request: ', { content });
+    logger.info('GPT Request: ', { content });
     const { data } = await OpenAI.createChatCompletion({
       model: 'gpt-3.5-turbo',
       max_tokens: 400,
@@ -391,7 +386,7 @@ async function getSummaryForPR(content: string) {
         { role: 'user', content },
       ],
     });
-    logger.debug('GPT Response: ', {
+    logger.info('GPT Response: ', {
       usage: data.usage,
       content: data.choices[0],
     });
