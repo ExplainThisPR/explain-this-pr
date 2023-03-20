@@ -12,6 +12,7 @@ import {
 import { getAuth, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { db } from '../firebase';
 
 const stripeCheckoutUrls: Record<string, string> = {
@@ -25,6 +26,7 @@ type Props = {
   onClose: () => void;
 };
 export default function SignUpModal({ open, onClose }: Props) {
+  const navigate = useNavigate();
   const pricingTiers = [
     {
       key: 'free',
@@ -51,6 +53,8 @@ export default function SignUpModal({ open, onClose }: Props) {
     const url = stripeCheckoutUrls[planKey];
     if (url) {
       window.location.href = `${url}?prefilled_email=${userEmail}`;
+    } else {
+      navigate('/signup-success');
     }
   };
   const onSignUp = async (planKey: string) => {

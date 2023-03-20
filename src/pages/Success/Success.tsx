@@ -1,8 +1,9 @@
-// Create a page where we show a success message for siging up
 import { Button, Card, Col, Result, Row, Typography } from 'antd';
 import React from 'react';
 
 export default function Success() {
+  const appUrl = 'https://github.com/apps/explain-this-pr';
+
   return (
     <div className="page-container">
       <Typography.Title>Thank you! You're appreciated 🥳</Typography.Title>
@@ -14,8 +15,11 @@ export default function Success() {
               title="You're all set"
               subTitle="You can now add the extension to your GitHub repo."
               extra={
-                <Button type="primary" onClick={() => {}}>
-                  Add Extension
+                <Button
+                  type="primary"
+                  onClick={() => (window.location.href = appUrl)}
+                >
+                  Open Extension
                 </Button>
               }
             />
