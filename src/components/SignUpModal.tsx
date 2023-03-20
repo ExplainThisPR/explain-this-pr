@@ -47,10 +47,10 @@ export default function SignUpModal({ open, onClose }: Props) {
       trialLength: 14,
     },
   ];
-  const subscribe = (planKey: string) => {
+  const subscribe = (planKey: string, userEmail: string) => {
     const url = stripeCheckoutUrls[planKey];
     if (url) {
-      window.open(url, '_blank');
+      window.location.href = `${url}?prefill_email=${userEmail}`;
     }
   };
   const onSignUp = async (planKey: string) => {
@@ -77,7 +77,7 @@ export default function SignUpModal({ open, onClose }: Props) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      subscribe(planKey);
+      subscribe(planKey, data.user.email || '');
     } catch (error) {
       message.warning('Something went wrong signing up! Please try again.');
       console.error(error);
