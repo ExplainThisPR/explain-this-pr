@@ -65,9 +65,9 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   logger.info(`Number of chunks to send: ${chunks.length}`);
   logger.info(filenames);
 
-  const responses = await Promise.all(
+  let responses = await Promise.all(
     chunks.map(async (chunk) => {
-      const combined = chunk.reduce((acc, file) => acc + file.content, '');
+      const combined = JSON.stringify(chunk);
       if (combined.length < 100) {
         return '';
       }
@@ -77,7 +77,14 @@ export const githubWebhook = https.onRequest(async (request, response) => {
       return message || '';
     }),
   );
-  logger.info(responses);
+
+  if (responses.length === 0) {
+    console.error('No responses from GPT');
+    responses = [
+      'No changes to analyze. Something likely went wrong. :thinking_face: We will look into it!',
+      'Sometimes re-running the analysis helps with timeout issues. :shrug:',
+    ];
+  }
 
   logger.info('Adding a comment to the PR..');
   const prefix = [
@@ -115,11 +122,14 @@ async function getSummaryForPR(content: string) {
     Please do not repeat yourself. If you already mention a technology like \`useFonts\` do not mention it again for that file.
     Please use the full filename. For example, \`src/components/Button.tsx\` is better than \`Button.tsx\`.
     Please be concise and do not talk repeatedly about the same change. If you have already mentioned how PDF data generation works for example, do not discuss again it.
-    Only focus on the most impactful functional changes. The is 4 bullet points. For each additional bullet point, divide the total \`patch\` length by 1500 to determine how many more bullet points you can add for this file.
+    Only focus on the most impactful functional changes. The maximum is 4 bullet points. For each additional bullet point, divide the total \`patch\` length by 1500 to determine how many more bullet points you can add for this file.
+    Here is an example of a response:
     ## src/App.tsx
       - Moved the routing logic to a standalone \`Router\` component
-    `;
+      - Setup a listener for the AuthState of the user and update the Redux store with the current user
 
+    `;
+    logger.debug('GPT Request: ', { content });
     const { data } = await OpenAI.createChatCompletion({
       model: 'gpt-3.5-turbo',
       max_tokens: 400,
