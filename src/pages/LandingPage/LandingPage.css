@@ -22,6 +22,7 @@
 
 .sh-code-text {
   color: #c9d1d9;
+  white-space: pre-wrap;
 }
 
 .markdown-container {

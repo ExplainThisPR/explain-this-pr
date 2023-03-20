@@ -1,14 +1,4 @@
-// Create a Modal using antd that explains the pricing plan and how you can sign up
-import {
-  Button,
-  Col,
-  Input,
-  Row,
-  Typography,
-  Modal,
-  message,
-  Divider,
-} from 'antd';
+import { Button, Col, Row, Typography, Modal, message, Divider } from 'antd';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { getAuth, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';

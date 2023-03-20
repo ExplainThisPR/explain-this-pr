@@ -12,15 +12,12 @@ type Props = {
 };
 const RestrictAuth = ({ children }: Props) => {
   const location = useLocation();
-  const account = JSON.parse(localStorage.getItem('account') || 'null');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
   const signUserOut = React.useCallback(() => {
     auth.signOut();
-    localStorage.removeItem('account');
+    localStorage.removeItem('user');
   }, []);
-  if (
-    !account ||
-    moment().subtract(3, 'hours').isAfter(moment(account.login_at))
-  ) {
+  if (!user || moment().subtract(10, 'days').isAfter(moment(user.login_at))) {
     // User is not logged in or session has expired
     signUserOut();
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -53,9 +50,9 @@ const router = createBrowserRouter([
       {
         path: '/signup-success',
         element: (
-          <RestrictGuest>
+          <RestrictAuth>
             <Success />
-          </RestrictGuest>
+          </RestrictAuth>
         ),
       },
       /*

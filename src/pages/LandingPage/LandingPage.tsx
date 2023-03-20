@@ -53,7 +53,6 @@ function LandingPage() {
       if (doc.exists()) {
         const data = doc.data() as PublicData;
         setStats(data);
-        console.log(data);
       }
     });
     return () => {
@@ -64,6 +63,13 @@ function LandingPage() {
     const value = stats?.loc_analyzed || 1000;
     return value.toLocaleString();
   }, [stats?.loc_analyzed]);
+  const command = [
+    'gh api \\',
+    '-H "Accept: application/vnd.github+json" \\',
+    '-H "X-GitHub-Api-Version: 2022-11-28" \\',
+    '/repos/[OWNER]/[REPO]/pulls/[PULL]/files \\',
+    '> output.json',
+  ].join('\n');
 
   return (
     <div className="page-container">
@@ -89,11 +95,7 @@ function LandingPage() {
       <Row justify="center">
         <Col span={8} className="sh-code">
           <Typography.Text copyable className="sh-code-text">
-            gh api \
-            <br /> -H "Accept: application/vnd.github+json" \
-            <br /> -H "X-GitHub-Api-Version: 2022-11-28" \
-            <br /> /repos/[OWNER]/[REPO]/pulls/[PULL]/files \
-            <br /> {'>'} output.json
+            {command}
           </Typography.Text>
         </Col>
       </Row>

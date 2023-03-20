@@ -180,19 +180,22 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     (acc, file) => acc + file.changes,
     0,
   );
-  const locLimit = await validateCodeLimit(
-    totalChanges,
-    repoName,
-    repoOwner,
-    pullNumber,
-    octokit,
-  );
 
-  if (!locLimit) {
-    response.status(400).send({
-      message:
-        'You have exceeded your lines of code monthly limit. Please upgrade your subscription.',
-    });
+  if (!body.diff_body) {
+    const locLimit = await validateCodeLimit(
+      totalChanges,
+      repoName,
+      repoOwner,
+      pullNumber,
+      octokit,
+    );
+
+    if (!locLimit) {
+      response.status(400).send({
+        message:
+          'You have exceeded your lines of code monthly limit. Please upgrade your subscription.',
+      });
+    }
   }
 
   let responses = await Promise.all(
