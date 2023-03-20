@@ -45,7 +45,7 @@ const OpenAI = new OpenAIApi(configuration);
 
 const gh = new App({ appId, privateKey });
 
-Route.post('/webhook', async ({ request }: HttpContext) => {
+Route.post('/github/webhook', async ({ request }: HttpContext) => {
   console.log({
     action: request.body().action,
   });
@@ -61,9 +61,9 @@ Route.post('/webhook', async ({ request }: HttpContext) => {
     const payload = request.body() as PullRequestLabeledEvent;
     const label = payload.label.name.toLowerCase();
     if (label !== 'explainthispr') {
-      /*return {
+      return {
         message: 'Nothing for me to do.',
-      };*/
+      };
     }
 
     installationId = payload.installation?.id || 0;
@@ -89,7 +89,7 @@ Route.post('/webhook', async ({ request }: HttpContext) => {
 
   const chunks = breakFilesIntoChunks(filestoAnalyze);
   console.log(`Number of chunks to send: ${chunks.length}`);
-  /*
+
   const responses = await Promise.all(
     chunks.map(async (chunk) => {
       const combined = chunk.reduce((acc, file) => acc + file.content, '');
@@ -98,7 +98,7 @@ Route.post('/webhook', async ({ request }: HttpContext) => {
       return message || '';
     })
   );
-  console.log(responses);*/
+  console.log(responses);
 
   if (request.body().action === 'labeled') {
     console.log('Adding a comment to the PR..');
@@ -115,6 +115,7 @@ Route.post('/webhook', async ({ request }: HttpContext) => {
     }
   }
 
+  console.log('Execution done.');
   return {
     message: 'Well, done!',
   };
