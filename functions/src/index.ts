@@ -68,6 +68,10 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   const responses = await Promise.all(
     chunks.map(async (chunk) => {
       const combined = chunk.reduce((acc, file) => acc + file.content, '');
+      if (combined.length < 100) {
+        return '';
+      }
+
       const gpt = await getSummaryForPR(combined);
       const message = gpt?.choices[0].message?.content;
       return message || '';
@@ -75,26 +79,24 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   );
   logger.info(responses);
 
-  if (body.action === 'labeled') {
-    logger.info('Adding a comment to the PR..');
-    const prefix = [
-      '## :robot: Explain this PR :robot:',
-      'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
-      'Please [share your feedback](url) with me. :heart:',
-    ];
-    const comment = [...prefix, ...responses].join('\n');
-    try {
-      await octokit.rest.issues.createComment({
-        owner: repoOwner,
-        repo: repoName,
-        issue_number: pullNumber,
-        body: comment,
-      });
-      logger.debug('Comment added to the PR:', { comment });
-    } catch (e: any) {
-      const error = e?.response?.data || e;
-      logger.error('Failed to create comment', error);
-    }
+  logger.info('Adding a comment to the PR..');
+  const prefix = [
+    '## :robot: Explain this PR :robot:',
+    'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
+    'Please [share your feedback](url) with me. :heart:',
+  ];
+  const comment = [...prefix, ...responses].join('\n');
+  try {
+    await octokit.rest.issues.createComment({
+      owner: repoOwner,
+      repo: repoName,
+      issue_number: pullNumber,
+      body: comment,
+    });
+    logger.debug('Comment added to the PR:', { comment });
+  } catch (e: any) {
+    const error = e?.response?.data || e;
+    logger.error('Failed to create comment', error);
   }
 
   response.send({
