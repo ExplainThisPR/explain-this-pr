@@ -174,7 +174,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   const filenames = filestoAnalyze.map((file) => file.filename);
   const chunks = Github.breakFilesIntoChunks(filestoAnalyze);
   logger.info(`Number of chunks to send: ${chunks.length}`);
-  logger.info(filenames);
+  logger.info('files to process:', filenames);
 
   /*
   const totalChanges = filestoAnalyze.reduce(
@@ -212,6 +212,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
       return message || '';
     }),
   );
+  responses = responses.filter(Boolean);
 
   const prefix = [
     '## :robot: Explain this PR :robot:',
@@ -219,7 +220,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     'Please [share your feedback](https://tally.so/r/3jZG9E) with me. :heart:',
   ];
   if (responses.length === 0) {
-    console.error('No responses from GPT');
+    logger.error('No responses from GPT');
     responses = [
       'No changes to analyze. Something likely went wrong. :thinking_face: We will look into it!',
       'Sometimes re-running the analysis helps with timeout issues. :shrug:',
@@ -287,7 +288,7 @@ async function fetchDiff(request: Request, response: Response) {
     body.action === 'added' &&
     (body.repositories_added?.length || 0) > 0
   ) {
-    console.log('repo added. Saving to db..');
+    logger.info('repo added. Saving to db..');
     const newRepoName = body.repositories_added[0].full_name;
     const success = await repoAdded(body.sender.id, newRepoName);
     const message = !success
@@ -302,7 +303,7 @@ async function fetchDiff(request: Request, response: Response) {
     body.action === 'removed' &&
     (body.repositories_removed?.length || 0) > 0
   ) {
-    console.log('repo removed. Updating the db..');
+    logger.info('repo removed. Updating the db..');
     const deletedRepoName = body.repositories_removed[0].full_name;
     await repoRemoved(body.sender.id, deletedRepoName);
     const message = 'Successfully removed the repository from your account.';
@@ -311,7 +312,7 @@ async function fetchDiff(request: Request, response: Response) {
     });
     return;*/
   } else {
-    console.log('Bad action request. Ignoring..');
+    logger.info('Bad action request. Ignoring..');
     response.send({
       message: 'Nothing for me to do.',
     });
