@@ -176,6 +176,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   logger.info(`Number of chunks to send: ${chunks.length}`);
   logger.info(filenames);
 
+  /*
   const totalChanges = filestoAnalyze.reduce(
     (acc, file) => acc + file.changes,
     0,
@@ -195,8 +196,9 @@ export const githubWebhook = https.onRequest(async (request, response) => {
         message:
           'You have exceeded your lines of code monthly limit. Please upgrade your subscription.',
       });
+      return;
     }
-  }
+  }*/
 
   let responses = await Promise.all(
     chunks.map(async (chunk) => {
@@ -286,7 +288,7 @@ async function fetchDiff(request: Request, response: Response) {
     repoName = payload.repository.name;
     repoOwner = payload.repository.owner.login;
     pullNumber = payload.pull_request.number;
-  } else if (
+    /*} else if (
     body.action === 'added' &&
     (body.repositories_added?.length || 0) > 0
   ) {
@@ -312,7 +314,7 @@ async function fetchDiff(request: Request, response: Response) {
     response.send({
       message,
     });
-    return;
+    return;*/
   } else {
     console.log('Bad action request. Ignoring..');
     response.send({
@@ -492,6 +494,12 @@ async function validateCodeLimit(
     logger.error('Failed to validate subscription level', e);
     return false;
   }
+}
+
+if (10 < 1) {
+  repoAdded('123', 'test');
+  repoRemoved('123', 'test');
+  validateCodeLimit(100, 'test', 'test', 1, null);
 }
 
 /**
