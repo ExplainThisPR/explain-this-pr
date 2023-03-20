@@ -13,7 +13,7 @@ const configuration = new Configuration({
 });
 const OpenAI = new OpenAIApi(configuration);
 const stripeKey = config().stripe.api_key;
-const stripeEndpointSecret = config().stripe.endpoint_secret;
+const stripeEndpointSecret = config().stripe.webhook_secret;
 const stripe = new Stripe(stripeKey, {
   apiVersion: '2022-11-15',
 });
@@ -24,7 +24,6 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
   let event: Stripe.Event;
 
   try {
-    console.log({ sig, stripeEndpointSecret });
     event = stripe.webhooks.constructEvent(
       request.body,
       sig,
