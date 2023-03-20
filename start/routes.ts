@@ -26,6 +26,7 @@ import { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/d
 import crypto from 'crypto';
 import { App } from 'octokit';
 import { extensions } from '../datapoints';
+import { Configuration, OpenAIApi } from 'openai';
 
 type PullRequestFiles = RestEndpointMethodTypes['pulls']['listFiles']['response']['data'];
 
@@ -35,6 +36,12 @@ Route.get('/', async () => {
 
 const appId = Env.get('GITHUB_APP_ID');
 const privateKey = Env.get('GITHUB_APP_PRIVATE_KEY');
+const API_KEY = Env.get('OPENAI_API_KEY');
+
+const configuration = new Configuration({
+  apiKey: API_KEY,
+});
+const OpenAI = new OpenAIApi(configuration);
 
 const gh = new App({ appId, privateKey });
 
@@ -52,7 +59,8 @@ Route.post('/webhook', async ({ request }: HttpContext) => {
 
   if (request.body().action === 'labeled') {
     const payload = request.body() as PullRequestLabeledEvent;
-    if (payload.label.name.toLowerCase() !== 'explainthispr') {
+    const label = payload.label.name.toLowerCase();
+    if (label !== 'explainthispr') {
       /*return {
         message: 'Nothing for me to do.',
       };*/
@@ -81,6 +89,31 @@ Route.post('/webhook', async ({ request }: HttpContext) => {
 
   const chunks = breakFilesIntoChunks(filestoAnalyze);
   console.log(`Number of chunks to send: ${chunks.length}`);
+  /*
+  const responses = await Promise.all(
+    chunks.map(async (chunk) => {
+      const combined = chunk.reduce((acc, file) => acc + file.content, '');
+      const gpt = await makeGPTRequest(combined);
+      const message = gpt?.choices[0].message?.content;
+      return message || '';
+    })
+  );
+  console.log(responses);*/
+
+  if (request.body().action === 'labeled') {
+    console.log('Adding a comment to the PR..');
+    try {
+      await octokit.rest.issues.createComment({
+        owner: repoOwner,
+        repo: repoName,
+        issue_number: pullNumber,
+        body: 'I am working on it!',
+      });
+    } catch (e) {
+      const error = e?.response?.data || e;
+      console.error('Failed to create comment', error);
+    }
+  }
 
   return {
     message: 'Well, done!',
@@ -126,8 +159,8 @@ function filterOutFiltersToAnalyze(files: PullRequestFiles) {
     return file;
   });
 
-  console.log(`Before filter: ${files.length}`);
-  console.log(`After filter: ${result.length}`);
+  console.log(`Files before filter: ${files.length}`);
+  console.log(`Files after filter: ${result.length}`);
   return result;
 }
 
@@ -165,5 +198,32 @@ function verifySignature(payloadBody: string, headerSignature: string) {
     !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(headerSignature))
   ) {
     throw new Error("Signatures didn't match!");
+  }
+}
+
+async function makeGPTRequest(content: string) {
+  try {
+    const prompt = Env.get('CHAT_PROMPT');
+    const { data } = await OpenAI.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      max_tokens: 400,
+      temperature: 0.3,
+      frequency_penalty: 0.2,
+      presence_penalty: 0.3,
+      top_p: 1,
+      messages: [
+        { role: 'system', content: prompt },
+        { role: 'user', content },
+      ],
+    });
+    console.log('GPT Response: ', data.choices[0]);
+    return data;
+  } catch (error) {
+    if (error.response) {
+      console.error(error.response.status, error.response.data);
+    } else {
+      console.error(error);
+    }
+    return null;
   }
 }
