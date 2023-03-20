@@ -10,18 +10,29 @@ const configuration = new Configuration({
 const OpenAI = new OpenAIApi(configuration);
 
 export const githubWebhook = https.onRequest(async (request, response) => {
-  logger.log({ action: request.body.action });
+  const body = request.body;
+  logger.log({ action: body.action });
 
   const signature = request.header('x-hub-signature-256');
-  Github.verifySignature(JSON.stringify(request.body()), signature || '');
+  const signatureGood = Github.verifySignature(
+    JSON.stringify(body),
+    signature || '',
+  );
+
+  if (!signatureGood) {
+    response.status(403).send({
+      message: 'Forbidden. Signature verification failed.',
+    });
+    return;
+  }
 
   let installationId = 0;
   let repoName = '';
   let repoOwner = '';
   let pullNumber = 0;
 
-  if (request.body().action === 'labeled') {
-    const payload = request.body() as PullRequestLabeledEvent;
+  if (body.action === 'labeled') {
+    const payload = body as PullRequestLabeledEvent;
     const label = payload.label.name.toLowerCase();
     if (label !== 'explainthispr') {
       response.send({
@@ -64,7 +75,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   );
   logger.info(responses);
 
-  if (request.body.action === 'labeled') {
+  if (body.action === 'labeled') {
     logger.info('Adding a comment to the PR..');
     try {
       await octokit.rest.issues.createComment({

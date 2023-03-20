@@ -16,7 +16,7 @@ export default class Github {
     return gh.getInstallationOctokit(installationId);
   }
 
-  static verifySignature(payloadBody: string, headerSignature: string): void {
+  static verifySignature(payloadBody: string, headerSignature: string) {
     const SECRET_TOKEN = config().github.webhook_secret;
     const algo = 'sha256';
     const encrypted = crypto
@@ -32,8 +32,10 @@ export default class Github {
         Buffer.from(headerSignature),
       )
     ) {
-      throw new Error("Signatures didn't match!");
+      return false;
     }
+
+    return true;
   }
 
   /**
