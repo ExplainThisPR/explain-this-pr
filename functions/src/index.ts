@@ -1,15 +1,90 @@
 import { https, logger, config, Response, Request } from 'firebase-functions';
+import { firestore } from 'firebase-admin';
 import Github, { PullRequestFiles } from './github';
 import { PullRequestLabeledEvent } from '@octokit/webhooks-types';
 import { Configuration, OpenAIApi } from 'openai';
 import { Octokit } from 'octokit';
 import { allowCors } from './helper';
+import Stripe from 'stripe';
 
 const apiKey = config().openai.api_key;
 const configuration = new Configuration({
   apiKey,
 });
 const OpenAI = new OpenAIApi(configuration);
+const stripeKey = config().stripe.api_key;
+const stripeEndpointSecret = config().stripe.endpoint_secret;
+const stripe = new Stripe(stripeKey, {
+  apiVersion: '2022-11-15',
+});
+
+export const stripeWebhook = https.onRequest(async (request, response) => {
+  const isPreflight = allowCors(request, response);
+  if (isPreflight) return;
+
+  const sig = request.header('stripe-signature') || '';
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      request.body,
+      sig,
+      stripeEndpointSecret,
+    );
+  } catch (err) {
+    const error = err as Error;
+    response.status(400).send(`Webhook Error: ${error.message}`);
+    return;
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const subscription = session.subscription as string;
+    const customer = session.customer as string;
+
+    const [subscriptionData, customerData] = await Promise.all([
+      stripe.subscriptions.retrieve(subscription),
+      stripe.customers.retrieve(customer),
+    ]);
+    const email = customerData.id;
+    const subItem = subscriptionData.items.data[0];
+    // Update the User document in Firestore with the new plan information
+    // Find the user with the email and update the plan
+    const query = await firestore()
+      .collection('users')
+      .where('email', '==', email)
+      .limit(1)
+      .get();
+    const user = query.docs[0];
+    if (
+      session.payment_status === 'paid' ||
+      session.payment_status === 'no_payment_required'
+    ) {
+      await user.ref.update({
+        stripe: {
+          subscription: {
+            id: subscription,
+            active: subscriptionData.status === 'active',
+            default_source: subscriptionData.default_source,
+            price_id: subItem.price.id,
+            price_key: subItem.price.nickname,
+            product_id: subItem.price.product,
+          },
+          customer: {
+            id: customer,
+          },
+        },
+      });
+    }
+
+    logger.info(
+      `Subscription created for ${email} on ${subItem.price.nickname}`,
+    );
+  }
+
+  response.send();
+});
 
 export const githubWebhook = https.onRequest(async (request, response) => {
   const isPreflight = allowCors(request, response);
