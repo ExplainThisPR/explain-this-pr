@@ -1,24 +1,24 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import { ConfigProvider } from 'antd';
+import { Outlet } from 'react-router';
 
 function App() {
+  const fontFamily =
+    'system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue,Noto Sans, Liberation Sans, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji';
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <ConfigProvider
+        theme={{
+          token: {
+            fontSize: 16,
+            colorPrimary: '#ab74e6',
+            fontFamily,
+          },
+        }}
+      >
+        <Outlet />
+      </ConfigProvider>
     </div>
   );
 }
