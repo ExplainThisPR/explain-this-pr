@@ -79,9 +79,8 @@ Route.post('/webhook', async ({ request }: HttpContext) => {
   const filenames = filestoAnalyze.map((file) => file.filename);
   console.log(filenames);
 
-  const content = combineIntoSingleString(filestoAnalyze);
-  console.log(content);
-  console.log(`Content length: ${content.length}`);
+  const chunks = breakFilesIntoChunks(filestoAnalyze);
+  console.log(`Number of chunks to send: ${chunks.length}`);
 
   return {
     message: 'Well, done!',
@@ -132,12 +131,29 @@ function filterOutFiltersToAnalyze(files: PullRequestFiles) {
   return result;
 }
 
-function combineIntoSingleString(files: PullRequestFiles) {
-  const result = files.map((file) => ({
-    filename: file.filename,
-    content: file.patch,
-  }));
-  return JSON.stringify(result);
+function breakFilesIntoChunks(files: PullRequestFiles) {
+  const result: { filename: string; content: string }[][] = [];
+  let index = 0;
+  let totalChar = 0;
+
+  // Split up the files in arrays of 9k characters
+  // To make sure we don't exceed the tokens limit on the GPT API
+  files.forEach((file) => {
+    const filename = file.filename;
+    const content = file.patch || '';
+    if (totalChar > 9000) {
+      index++;
+      totalChar = 0;
+    }
+
+    if (!result[index]) {
+      result[index] = [];
+    } else {
+      result[index].push({ filename, content });
+      totalChar += content.length;
+    }
+  });
+  return result;
 }
 
 function verifySignature(payloadBody: string, headerSignature: string) {
