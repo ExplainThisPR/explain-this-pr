@@ -34,8 +34,8 @@ export default function SignUpModal({ open, onClose }: Props) {
       trialLength: 14,
     },
     {
-      key: 'small_org',
-      name: 'Org Pack',
+      key: 'pro',
+      name: 'Pro Pack',
       price: 3499,
       features: ['30 repos', 'Advanced workflow', '~ 800K LOC/month'], // cost: $6.4
       trialLength: 14,
@@ -56,6 +56,14 @@ export default function SignUpModal({ open, onClose }: Props) {
         name: data.user.displayName,
         photoURL: data.user.photoURL,
         plan: planKey,
+        usage: {
+          repos: 0,
+          loc: 0,
+          repos_limit: 1,
+          loc_limit: 25000,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
     } catch (error) {
       console.error(error);
