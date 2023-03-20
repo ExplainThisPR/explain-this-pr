@@ -69,6 +69,12 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     }),
   );
 
+  const prefix = [
+    '## :robot: Explain this PR :robot:',
+    'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
+    'Please [share your feedback](url) with me. :heart:',
+  ];
+  const comment = [...prefix, ...responses].join('\n');
   if (responses.length === 0) {
     console.error('No responses from GPT');
     responses = [
@@ -78,12 +84,6 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   }
 
   logger.info('Adding a comment to the PR..');
-  const prefix = [
-    '## :robot: Explain this PR :robot:',
-    'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
-    'Please [share your feedback](url) with me. :heart:',
-  ];
-  const comment = [...prefix, ...responses].join('\n');
   try {
     if (octokit) {
       await octokit.rest.issues.createComment({
@@ -99,9 +99,15 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     logger.error('Failed to create comment', error);
   }
 
-  response.send({
-    message: 'Well, done!',
-  });
+  if (body.diff_body) {
+    response.send({
+      comment,
+    });
+  } else {
+    response.send({
+      message: 'Well, done!',
+    });
+  }
 });
 
 async function fetchDiff(request: Request, response: Response) {
