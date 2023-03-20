@@ -31,6 +31,7 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
     );
   } catch (err) {
     const error = err as Error;
+    logger.error(error);
     response.status(400).send(`Webhook Error: ${error.message}`);
     return;
   }
@@ -40,68 +41,75 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
     const subscription = session.subscription as string;
     const customer = session.customer as string;
 
-    const [subscriptionData, customerData] = await Promise.all([
-      stripe.subscriptions.retrieve(subscription),
-      stripe.customers.retrieve(customer),
-    ]);
-    const email = customerData.id;
-    const subItem = subscriptionData.items.data[0];
-    // Update the User document in Firestore with the new plan information
-    // Find the user with the email and update the plan
-    const query = await firestore()
-      .collection('users')
-      .where('email', '==', email)
-      .limit(1)
-      .get();
-    const user = query.docs[0];
-    if (
-      session.payment_status === 'paid' ||
-      session.payment_status === 'no_payment_required'
-    ) {
-      const getLimits = () => {
-        const userDoc = user.data();
-        const usage = userDoc.usage || {};
-        if (userDoc.plan === 'starter') {
-          return {
-            ...usage,
-            repos_limit: 4,
-            loc_limit: 100000,
-          };
-        } else if (userDoc.plan === 'pro') {
-          return {
-            ...usage,
-            repos_limit: 30,
-            loc_limit: 800000,
-          };
-        } else {
-          return {
-            ...usage,
-            repos_limit: 1,
-            loc_limit: 25000,
-          };
-        }
-      };
-      await user.ref.update({
-        usage: getLimits(),
-        stripe: {
-          subscription: {
-            id: subscription,
-            active: subscriptionData.status === 'active',
-            default_source: subscriptionData.default_source,
-            price_id: subItem.price.id,
-            price_key: subItem.price.nickname,
-            product_id: subItem.price.product,
+    try {
+      const [subscriptionData, customerData] = await Promise.all([
+        stripe.subscriptions.retrieve(subscription),
+        stripe.customers.retrieve(customer),
+      ]);
+      const email = customerData.id;
+      const subItem = subscriptionData.items.data[0];
+      // Update the User document in Firestore with the new plan information
+      // Find the user with the email and update the plan
+      const query = await firestore()
+        .collection('users')
+        .where('email', '==', email)
+        .limit(1)
+        .get();
+      const user = query.docs[0];
+      if (
+        session.payment_status === 'paid' ||
+        session.payment_status === 'no_payment_required'
+      ) {
+        const getLimits = () => {
+          const userDoc = user.data();
+          const usage = userDoc.usage || {};
+          if (userDoc.plan === 'starter') {
+            return {
+              ...usage,
+              repos_limit: 4,
+              loc_limit: 100000,
+            };
+          } else if (userDoc.plan === 'pro') {
+            return {
+              ...usage,
+              repos_limit: 30,
+              loc_limit: 800000,
+            };
+          } else {
+            return {
+              ...usage,
+              repos_limit: 1,
+              loc_limit: 25000,
+            };
+          }
+        };
+        await user.ref.update({
+          usage: getLimits(),
+          stripe: {
+            subscription: {
+              id: subscription,
+              active: subscriptionData.status === 'active',
+              default_source: subscriptionData.default_source,
+              price_id: subItem.price.id,
+              price_key: subItem.price.nickname,
+              product_id: subItem.price.product,
+            },
+            customer: {
+              id: customer,
+            },
           },
-          customer: {
-            id: customer,
-          },
-        },
-      });
-    }
+        });
+      }
 
-    logger.info(
-      `Subscription created for ${email} on ${subItem.price.nickname}`,
-    );
+      logger.info(
+        `Subscription created for ${email} on ${subItem.price.nickname}`,
+      );
+    } catch (err) {
+      const error = err as Error;
+      logger.error(error);
+      response.status(400).send(`Failed to perform logic: ${error.message}`);
+      return;
+    }
   }
 
   response.send();
