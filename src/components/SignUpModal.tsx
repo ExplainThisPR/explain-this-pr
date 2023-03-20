@@ -18,8 +18,8 @@ import { db } from '../firebase';
 
 const stripeCheckoutUrls: Record<string, string> = {
   free: '',
-  starter: 'https://buy.stripe.com/test_6oEeXG9u9erqePK6oo',
-  pro: 'https://buy.stripe.com/test_6oE16Q49P1EE6je001',
+  starter: 'https://buy.stripe.com/3cs4hb2Zlb8i03S4gg', //'https://buy.stripe.com/test_6oEeXG9u9erqePK6oo',
+  pro: 'https://buy.stripe.com/5kAcNH57t4JU9EsbIJ', //'https://buy.stripe.com/test_6oE16Q49P1EE6je001',
 };
 
 type Props = {
