@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import { doc, onSnapshot } from 'firebase/firestore';
 import './LandingPage.css';
 import { db } from '../../firebase';
+import SignUpModal from '../../components/SignUpModal';
 
 type PublicData = {
   last_run_at: string;
@@ -18,6 +19,7 @@ function LandingPage() {
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [stats, setStats] = React.useState<PublicData | null>(null);
+  const [showSignupModal, setShowSignupModal] = React.useState(false);
   // Call the Firebase Function with diff_body as the body
   const handleExplain = async () => {
     try {
@@ -56,6 +58,13 @@ function LandingPage() {
 
   return (
     <div className="page-container">
+      <header>
+        <Col span={4}>
+          <Button size="large" type="primary" onClick={() => setShowSignupModal(true)}>
+            Get GitHub Integration
+          </Button>
+        </Col>
+      </header>
       <Typography.Title>ExplainThisPR</Typography.Title>
       <Typography.Title level={4}>
         1. Use the{' '}
@@ -152,6 +161,10 @@ function LandingPage() {
           />
         </a>
       </Col>
+      <SignUpModal
+        open={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+      />
     </div>
   );
 }
