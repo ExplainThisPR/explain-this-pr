@@ -1,5 +1,5 @@
 import { https, logger, config, Response, Request } from 'firebase-functions';
-import { initializeApp, firestore } from 'firebase-admin';
+import * as admin from 'firebase-admin';
 import Github, { PullRequestFiles } from './github';
 import { PullRequestLabeledEvent } from '@octokit/webhooks-types';
 import { Configuration, OpenAIApi } from 'openai';
@@ -18,7 +18,7 @@ const stripe = new Stripe(stripeKey, {
   apiVersion: '2022-11-15',
 });
 
-initializeApp();
+admin.initializeApp();
 
 export const stripeWebhook = https.onRequest(async (request, response) => {
   const sig = request.header('stripe-signature') || '';
@@ -52,7 +52,8 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
       const subItem = subscriptionData.items.data[0];
       // Update the User document in Firestore with the new plan information
       // Find the user with the email and update the plan
-      const query = await firestore()
+      const query = await admin
+        .firestore()
         .collection('users')
         .where('email', '==', email)
         .limit(1)
@@ -409,7 +410,8 @@ async function validateRepoCountLimit(
   If over, throw an error to end the request
 */
   try {
-    const query = await firestore()
+    const query = await admin
+      .firestore()
       .collection('Users')
       .where(
         'repos',
@@ -455,7 +457,8 @@ async function validateCodeLimit(
   If over, throw an error to end the request
 */
   try {
-    const query = await firestore()
+    const query = await admin
+      .firestore()
       .collection('Users')
       .where(
         'repos',
@@ -494,7 +497,8 @@ async function validateCodeLimit(
 async function repoAdded(githubId: string, repoName: string) {
   try {
     // Find user by githubId
-    const query = await firestore()
+    const query = await admin
+      .firestore()
       .collection('Users')
       .where('githubId', '==', githubId)
       .get();
@@ -508,11 +512,12 @@ async function repoAdded(githubId: string, repoName: string) {
     }
 
     // Add repo to user
-    await firestore()
+    await admin
+      .firestore()
       .collection('Users')
       .doc(user.id)
       .update({
-        repos: firestore.FieldValue.arrayUnion(repoName),
+        repos: admin.firestore.FieldValue.arrayUnion(repoName),
       });
     return true;
   } catch (e) {
@@ -527,7 +532,8 @@ async function repoAdded(githubId: string, repoName: string) {
 async function repoRemoved(githubId: string, repoName: string) {
   try {
     // Find user by githubId
-    const query = await firestore()
+    const query = await admin
+      .firestore()
       .collection('Users')
       .where('githubId', '==', githubId)
       .get();
@@ -537,11 +543,12 @@ async function repoRemoved(githubId: string, repoName: string) {
     const user = query.docs[0].data();
 
     // Remove repo to user
-    await firestore()
+    await admin
+      .firestore()
       .collection('Users')
       .doc(user.id)
       .update({
-        repos: firestore.FieldValue.arrayRemove(repoName),
+        repos: admin.firestore.FieldValue.arrayRemove(repoName),
       });
   } catch (e) {
     logger.error('Failed to remove repo to user', e);
