@@ -24,6 +24,7 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
   let event: Stripe.Event;
 
   try {
+    console.log({ sig, stripeEndpointSecret });
     event = stripe.webhooks.constructEvent(
       request.body,
       sig,
