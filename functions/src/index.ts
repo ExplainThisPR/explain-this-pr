@@ -19,9 +19,6 @@ const stripe = new Stripe(stripeKey, {
 });
 
 export const stripeWebhook = https.onRequest(async (request, response) => {
-  const isPreflight = allowCors(request, response);
-  if (isPreflight) return;
-
   const sig = request.header('stripe-signature') || '';
 
   let event: Stripe.Event;
