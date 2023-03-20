@@ -1,10 +1,14 @@
-import { Button, Col, Input, Row, Typography, message } from 'antd';
+import { Button, Col, Input, Row, Typography, message, Divider } from 'antd';
 import axios from 'axios';
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGemoji from 'remark-gemoji';
+import remarkGfm from 'remark-gfm';
 import './LandingPage.css';
 
 function LandingPage() {
   const [diff, setDiff] = React.useState('');
+  const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   // Call the Firebase Function with diff_body as the body
   const handleExplain = async () => {
@@ -17,11 +21,12 @@ function LandingPage() {
         diff_body: diff,
       });
       console.log(data);
+      setResult(data.comment);
       setLoading(false);
     } catch (error) {
       setLoading(false);
       console.error(error);
-      message.error('Something went wrong. Please try again');
+      message.error('Your request failed. Please try again');
     }
   };
 
@@ -34,6 +39,7 @@ function LandingPage() {
       <Row justify="center">
         <Col span={18}>
           <Input.TextArea
+            className="textarea font-mono"
             placeholder="Paste your PR diff here"
             autoSize={{ minRows: 10, maxRows: 20 }}
             onChange={(e) => setDiff(e.target.value)}
@@ -41,11 +47,19 @@ function LandingPage() {
           />
         </Col>
       </Row>
+      <br />
       <Row justify="center">
         <Button size="large" onClick={handleExplain} loading={loading}>
           Explain this PR
         </Button>
       </Row>
+      <Divider />
+      <ReactMarkdown
+        className="markdown-container font-mono"
+        remarkPlugins={[remarkGfm, remarkGemoji]}
+      >
+        {result}
+      </ReactMarkdown>
     </div>
   );
 }
