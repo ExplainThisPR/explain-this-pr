@@ -279,6 +279,31 @@ async function fetchDiff(request: Request, response: Response) {
     repoName = payload.repository.name;
     repoOwner = payload.repository.owner.login;
     pullNumber = payload.pull_request.number;
+  } else if (
+    body.action === 'added' &&
+    (body.repositories_added?.length || 0) > 0
+  ) {
+    const payload = body as any;
+    const newRepoName = body.repositories_added[0].full_name;
+    const success = await repoAdded(body.sender.id, newRepoName);
+    if (!success) {
+      response.status(400).send({
+        message:
+          'Failed to validate subscription level. Please contact support.',
+      });
+      return;
+    }
+
+    installationId = payload.installation?.id || 0;
+    repoName = payload.repository.name;
+    repoOwner = payload.repository.owner.login;
+    pullNumber = payload.pull_request.number;
+  } else if (
+    body.action === 'removed' &&
+    (body.repositories_removed?.length || 0) > 0
+  ) {
+    const deletedRepoName = body.repositories_removed[0].full_name;
+    await repoRemoved(body.sender.id, deletedRepoName);
   } else {
     response.send({
       message: 'Nothing for me to do.',
@@ -454,6 +479,66 @@ async function validateCodeLimit(
   } catch (e) {
     logger.error('Failed to validate subscription level', e);
     return false;
+  }
+}
+
+/**
+ * Add the repo to the list of repos for the user if within limits
+ */
+async function repoAdded(githubId: string, repoName: string) {
+  try {
+    // Find user by githubId
+    const query = await firestore()
+      .collection('Users')
+      .where('githubId', '==', githubId)
+      .get();
+    if (query.empty) {
+      return false;
+    }
+    const user = query.docs[0].data();
+    const { repos_limit } = user.usage;
+    if (user.repos.length >= repos_limit) {
+      return false;
+    }
+
+    // Add repo to user
+    await firestore()
+      .collection('Users')
+      .doc(user.id)
+      .update({
+        repos: firestore.FieldValue.arrayUnion(repoName),
+      });
+    return true;
+  } catch (e) {
+    logger.error('Failed to add repo to user', e);
+    return false;
+  }
+}
+
+/**
+ * Remove a repo from the list of repos for a user
+ */
+async function repoRemoved(githubId: string, repoName: string) {
+  try {
+    // Find user by githubId
+    const query = await firestore()
+      .collection('Users')
+      .where('githubId', '==', githubId)
+      .get();
+    if (query.empty) {
+      return false;
+    }
+    const user = query.docs[0].data();
+
+    // Remove repo to user
+    await firestore()
+      .collection('Users')
+      .doc(user.id)
+      .update({
+        repos: firestore.FieldValue.arrayRemove(repoName),
+      });
+  } catch (e) {
+    logger.error('Failed to remove repo to user', e);
   }
 }
 /*
