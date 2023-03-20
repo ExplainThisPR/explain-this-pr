@@ -73,7 +73,7 @@ function LandingPage() {
   return (
     <div className="page-container">
       <header>
-        <Col span={4}>
+        <Col sm={20} md={12} lg={4} style={{ textAlign: 'center' }}>
           <Button size="large" type="primary" onClick={openSignupButton}>
             Get GitHub Integration
           </Button>
@@ -92,7 +92,7 @@ function LandingPage() {
         to run this command
       </Typography.Title>
       <Row justify="center">
-        <Col span={8} className="sh-code">
+        <Col sm={24} md={12} lg={8} className="sh-code">
           <Typography.Text copyable className="sh-code-text">
             {command}
           </Typography.Text>
@@ -104,7 +104,7 @@ function LandingPage() {
       </Typography.Title>
       <br />
       <Row justify="center">
-        <Col span={18}>
+        <Col sm={20} md={18}>
           <Input.TextArea
             className="textarea font-mono"
             placeholder="Paste the response from the pulls/{id}/files API call here"
@@ -116,7 +116,7 @@ function LandingPage() {
       </Row>
       <br />
       <Row justify="center">
-        <Col span={5}>
+        <Col sm={12} md={8} lg={5}>
           <Button
             size="large"
             onClick={handleExplain}
