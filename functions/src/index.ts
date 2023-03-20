@@ -7,6 +7,8 @@ import { Octokit } from 'octokit';
 import { allowCors } from './helper';
 import Stripe from 'stripe';
 
+admin.initializeApp();
+
 const apiKey = config().openai.api_key;
 const configuration = new Configuration({
   apiKey,
@@ -17,8 +19,6 @@ const stripeEndpointSecret = config().stripe.webhook_secret;
 const stripe = new Stripe(stripeKey, {
   apiVersion: '2022-11-15',
 });
-
-admin.initializeApp();
 
 export const stripeWebhook = https.onRequest(async (request, response) => {
   const sig = request.header('stripe-signature') || '';
