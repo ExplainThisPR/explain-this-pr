@@ -176,12 +176,13 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   logger.info(`Number of chunks to send: ${chunks.length}`);
   logger.info('files to process:', filenames);
 
-  /*
   const totalChanges = filestoAnalyze.reduce(
     (acc, file) => acc + file.changes,
     0,
   );
+  updatePublicStats(totalChanges);
 
+  /*
   if (!body.diff_body) {
     const locLimit = await validateCodeLimit(
       totalChanges,
@@ -565,3 +566,19 @@ async function repoRemoved(githubId: string, repoName: string) {
 When a user is created, save their limits on their account
 When a new repo is connected/removed to the app, find the user it belongs to and update their limits
 */
+
+async function updatePublicStats(loc_analyzed: number) {
+  try {
+    await admin
+      .firestore()
+      .doc('/AdminDashboard/public')
+      .update({
+        runs: admin.firestore.FieldValue.increment(1),
+        loc_analyzed: admin.firestore.FieldValue.increment(loc_analyzed),
+        last_run_at: new Date().toISOString(),
+      });
+    logger.info('Successfully updated public stats');
+  } catch (err) {
+    logger.error('Failed to update public stats', err);
+  }
+}
