@@ -10,9 +10,15 @@ import {
   Divider,
 } from 'antd';
 import { getAuth, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import React from 'react';
 import { db } from '../firebase';
+
+const stripeCheckoutUrls: Record<string, string> = {
+  free: '',
+  starter: 'https://buy.stripe.com/test_6oEeXG9u9erqePK6oo',
+  pro: 'https://buy.stripe.com/test_6oE16Q49P1EE6je001',
+};
 
 type Props = {
   open: boolean;
@@ -41,6 +47,12 @@ export default function SignUpModal({ open, onClose }: Props) {
       trialLength: 14,
     },
   ];
+  const subscribe = (planKey: string) => {
+    const url = stripeCheckoutUrls[planKey];
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
   const onSignUp = async (planKey: string) => {
     try {
       const provider = new GithubAuthProvider();
@@ -65,7 +77,9 @@ export default function SignUpModal({ open, onClose }: Props) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
+      subscribe(planKey);
     } catch (error) {
+      message.warning('Something went wrong signing up! Please try again.');
       console.error(error);
     }
   };
