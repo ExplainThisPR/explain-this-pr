@@ -10,6 +10,7 @@ import './Playground.css';
 import { db } from '../../firebase';
 import SignUpModal from '../../components/SignUpModal';
 import { getAnalytics, logEvent } from 'firebase/analytics';
+import { UploadOutlined } from '@ant-design/icons';
 
 type PublicData = {
   last_run_at: string;
@@ -131,6 +132,7 @@ function Playground() {
             size="large"
             onClick={handleExplain}
             loading={loading}
+            icon={<UploadOutlined />}
             style={{ width: '100%' }}
           >
             Get to work
