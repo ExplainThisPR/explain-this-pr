@@ -1,15 +1,19 @@
+import React from 'react';
 import { Button, Col, Row, Typography, Modal, message, Divider } from 'antd';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { getAuth, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import React from 'react';
 import { useNavigate } from 'react-router';
 import { db } from '../firebase';
 
+const {
+  REACT_APP_STRIPE_STARTER_LINK: STARTER_LINK,
+  REACT_APP_STRIPEPRO_LINK: PRO_LINK,
+} = process.env;
 const stripeCheckoutUrls: Record<string, string> = {
   free: '',
-  starter: 'https://buy.stripe.com/3cs4hb2Zlb8i03S4gg', //'https://buy.stripe.com/test_6oEeXG9u9erqePK6oo',
-  pro: 'https://buy.stripe.com/5kAcNH57t4JU9EsbIJ', //'https://buy.stripe.com/test_6oE16Q49P1EE6je001',
+  starter: STARTER_LINK!,
+  pro: PRO_LINK!,
 };
 
 type Props = {
