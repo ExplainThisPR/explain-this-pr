@@ -17,6 +17,7 @@ type PublicData = {
   runs: number;
 };
 function Playground() {
+  const analytics = getAnalytics();
   const [diff, setDiff] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -25,6 +26,7 @@ function Playground() {
   // Call the Firebase Function with diff_body as the body
   const handleExplain = async () => {
     try {
+      logEvent(analytics, 'submit_explain_form');
       setLoading(true);
       const URL =
         'https://us-central1-explain-this-pr.cloudfunctions.net/githubWebhook';
@@ -42,12 +44,10 @@ function Playground() {
   };
   const openSignupButton = () => {
     setShowSignupModal(true);
-    const analytics = getAnalytics();
     logEvent(analytics, 'get_extension_click', {
       method: 'landing_page',
     });
   };
-
   React.useEffect(() => {
     const unsub = onSnapshot(doc(db, 'AdminDashboard', 'public'), (doc) => {
       if (doc.exists()) {
@@ -90,6 +90,7 @@ function Playground() {
           href="https://github.com/cli/cli#installation"
           target="_blank"
           rel="noreferrer"
+          onClick={() => logEvent(analytics, 'github_cli_url_click')}
         >
           Github CLI
         </a>{' '}
@@ -97,7 +98,11 @@ function Playground() {
       </Typography.Title>
       <Row justify="center">
         <Col sm={24} md={12} lg={8} className="sh-code">
-          <Typography.Text copyable className="sh-code-text">
+          <Typography.Text
+            copyable
+            className="sh-code-text"
+            onCopy={() => logEvent(analytics, 'copy_gh_command')}
+          >
             {command}
           </Typography.Text>
         </Col>
@@ -114,6 +119,7 @@ function Playground() {
             placeholder="Paste the response from the pulls/{id}/files API call here"
             autoSize={{ minRows: 10, maxRows: 20 }}
             onChange={(e) => setDiff(e.target.value)}
+            onPaste={() => logEvent(analytics, 'paste_command_output')}
             value={diff}
           />
         </Col>
