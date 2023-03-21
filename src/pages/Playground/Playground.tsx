@@ -10,6 +10,7 @@ import SignUpModal from '../../components/SignUpModal';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { FilterFilled } from '@ant-design/icons';
 import Footer from '../../components/Footer';
+import { Link } from 'react-router-dom';
 
 const { REACT_APP_PLAYGROUND_API: PLAYGROUND_API } = process.env;
 function Playground() {
@@ -55,11 +56,16 @@ function Playground() {
         <title>ExplainThisPR - Playground</title>
       </Helmet>
       <header>
-        <Col sm={20} md={12} lg={4} style={{ textAlign: 'center' }}>
-          <Button size="large" type="primary" onClick={openSignupButton}>
-            Get GitHub Integration
-          </Button>
-        </Col>
+        <Row justify="space-between">
+          <Link to="/">
+            <Button size="large">Go Home</Button>
+          </Link>
+          <Col sm={20} md={12} lg={4} style={{ textAlign: 'center' }}>
+            <Button size="large" type="primary" onClick={openSignupButton}>
+              Sign Up With Github
+            </Button>
+          </Col>
+        </Row>
       </header>
       <Typography.Title>ExplainThisPR</Typography.Title>
       <Typography.Title level={4}>

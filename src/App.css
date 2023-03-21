@@ -20,6 +20,7 @@ html {
   line-height: 1.5;
   font-size: 1rem;
   color: #212529;
+  min-height: 100vh;
 }
 
 .page-container {
@@ -43,6 +44,14 @@ html {
 }
 
 .App {
+  text-align: center;
+}
+
+.text-align-left {
+  text-align: left;
+}
+
+.text-align-center {
   text-align: center;
 }
 
