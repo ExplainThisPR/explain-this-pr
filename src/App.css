@@ -1,3 +1,5 @@
+@import url(https://fonts.googleapis.com/css?family=Vollkorn:400,400italic,700,700italic&subset=latin);
+
 /* Primary: #ab74e6 */
 html {
   background: #ddd6f3; /* fallback for old browsers */
@@ -23,6 +25,10 @@ html {
 .page-container {
   padding: 50px 32px;
   min-height: 100vh;
+}
+
+.with-hero {
+  padding-top: 0px;
 }
 
 .font-mono {
