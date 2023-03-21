@@ -5,6 +5,7 @@ import App from './App';
 import { auth } from './firebase';
 import ErrorPage from './pages/ErrorPage/ErrorPage';
 import LandingPage from './pages/LandingPage/LandingPage';
+import Playground from './pages/Playground/Playground';
 import Success from './pages/Success/Success';
 
 type Props = {
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
       {
         path: '/',
         element: <LandingPage />,
+      },
+      {
+        path: '/playground',
+        element: <Playground />,
       },
       {
         path: '/signup-success',

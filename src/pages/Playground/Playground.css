@@ -1,0 +1,179 @@
+@import url(http://fonts.googleapis.com/css?family=Vollkorn:400,400italic,700,700italic&subset=latin);
+
+.markdown-container img {
+  max-width: 100%;
+}
+
+.markdown-container table {
+  width: 100%;
+}
+
+.markdown-container table,
+.markdown-container th,
+.markdown-container td {
+  padding: 5px;
+}
+
+.sh-code {
+  background-color: #161b22;
+  padding: 12px 16px;
+  border-radius: 10px;
+}
+
+.sh-code-text {
+  color: #c9d1d9;
+  white-space: pre-wrap;
+}
+
+.markdown-container {
+  font: 1.3em 'Vollkorn', Palatino, Times;
+  color: #333;
+  line-height: 1.4;
+  text-align: justify;
+  padding: 1em;
+  margin: auto;
+  max-width: 42em;
+  background-color: #ededed;
+  border-radius: 10px;
+  border: 1px solid #acacac;
+}
+.markdown-container header,
+.markdown-container nav,
+.markdown-container article,
+.markdown-container footer {
+  width: 700px;
+  margin: 0 auto;
+}
+.markdown-container article {
+  margin-top: 4em;
+  margin-bottom: 4em;
+  min-height: 400px;
+}
+.markdown-container footer {
+  margin-bottom: 50px;
+}
+.markdown-container video {
+  margin: 2em 0;
+  border: 1px solid #ddd;
+}
+
+.markdown-container nav {
+  font-size: 0.9em;
+  font-style: italic;
+  border-bottom: 1px solid #ddd;
+  padding: 1em 0;
+}
+.markdown-container nav p {
+  margin: 0;
+}
+
+/* Typography
+-------------------------------------------------------- */
+
+.markdown-container h1 {
+  margin-top: 0;
+}
+
+.markdown-container h3 {
+  font-style: italic;
+  margin-top: 3em;
+}
+.markdown-container p {
+  margin-top: 0;
+  -webkit-hypens: auto;
+  -moz-hypens: auto;
+  hyphens: auto;
+}
+.markdown-container ul {
+  list-style: square;
+  padding-left: 1.2em;
+}
+.markdown-container ol {
+  padding-left: 1.2em;
+}
+.markdown-container blockquote {
+  margin-left: 1em;
+  padding-left: 1em;
+  border-left: 1px solid #ddd;
+}
+.markdown-container code {
+  font-family: 'Consolas', 'Menlo', 'Monaco', monospace, serif;
+  font-size: 0.9em;
+  background: white;
+}
+.markdown-container a {
+  color: #2484c1;
+  text-decoration: none;
+}
+.markdown-container a:hover {
+  text-decoration: underline;
+}
+.markdown-container a img {
+  border: none;
+}
+.markdown-container h1 a,
+h1 a:hover {
+  color: #333;
+  text-decoration: none;
+}
+.markdown-container hr {
+  color: #ddd;
+  height: 1px;
+  margin: 2em 0;
+  border-top: solid 1px #ddd;
+  border-bottom: none;
+  border-left: 0;
+  border-right: 0;
+}
+.markdown-container p#heart {
+  font-size: 2em;
+  line-height: 1;
+  text-align: center;
+  color: #ccc;
+}
+.markdown-container .red {
+  color: #b50000;
+}
+
+/* Home Page
+--------------------------- */
+
+.markdown-container#index li {
+  margin-bottom: 1em;
+}
+
+/* iPad
+-------------------------------------------------------- */
+@media only screen and (max-device-width: 1024px) {
+  .markdown-container {
+    font-size: 120%;
+    line-height: 1.4;
+  }
+} /* @iPad */
+
+/* iPhone
+-------------------------------------------------------- */
+@media only screen and (max-device-width: 480px) {
+  .markdown-container {
+    text-align: left;
+  }
+  .markdown-container article,
+  .markdown-container footer {
+    width: auto;
+  }
+  .markdown-container article {
+    padding: 0 10px;
+  }
+} /* @iPhone */
+
+.textarea {
+  border: 1px solid #ced4da;
+  background-color: #ededed;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  padding: 0.375rem 0.75rem;
+}
