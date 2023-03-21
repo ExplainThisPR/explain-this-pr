@@ -1,11 +1,15 @@
 import { Button, Card, Col, Result, Row, Typography } from 'antd';
 import React from 'react';
+import { Helmet } from 'react-helmet';
 
 export default function Success() {
   const appUrl = 'https://github.com/apps/explain-this-pr';
 
   return (
     <div className="page-container">
+      <Helmet>
+        <title>ExplainThisPR - Welcome</title>
+      </Helmet>
       <Typography.Title>Thank you! You're appreciated 🥳</Typography.Title>
       <Row justify="center">
         <Col span={8}>

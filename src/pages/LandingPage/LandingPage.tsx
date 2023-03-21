@@ -9,6 +9,7 @@ import './LandingPage.css';
 import { db } from '../../firebase';
 import SignUpModal from '../../components/SignUpModal';
 import { getAnalytics, logEvent } from 'firebase/analytics';
+import { Helmet } from 'react-helmet';
 
 type PublicData = {
   last_run_at: string;
@@ -72,6 +73,9 @@ function LandingPage() {
 
   return (
     <div className="page-container">
+      <Helmet>
+        <title>ExplainThisPR - Summarize pull requests in seconds</title>
+      </Helmet>
       <header>
         <Col sm={20} md={12} lg={4} style={{ textAlign: 'center' }}>
           <Button size="large" type="primary" onClick={openSignupButton}>
