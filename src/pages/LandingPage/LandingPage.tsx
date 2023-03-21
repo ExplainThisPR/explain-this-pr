@@ -4,23 +4,16 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGemoji from 'remark-gemoji';
 import remarkGfm from 'remark-gfm';
-import { doc, onSnapshot } from 'firebase/firestore';
 import './LandingPage.css';
-import { db } from '../../firebase';
 import SignUpModal from '../../components/SignUpModal';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Helmet } from 'react-helmet';
+import Footer from '../../components/Footer';
 
-type PublicData = {
-  last_run_at: string;
-  loc_analyzed: number;
-  runs: number;
-};
 function LandingPage() {
   const [diff, setDiff] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
-  const [stats, setStats] = React.useState<PublicData | null>(null);
   const [showSignupModal, setShowSignupModal] = React.useState(false);
   // Call the Firebase Function with diff_body as the body
   const handleExplain = async () => {
@@ -47,22 +40,6 @@ function LandingPage() {
       method: 'landing_page',
     });
   };
-
-  React.useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'AdminDashboard', 'public'), (doc) => {
-      if (doc.exists()) {
-        const data = doc.data() as PublicData;
-        setStats(data);
-      }
-    });
-    return () => {
-      unsub();
-    };
-  }, []);
-  const analyzedCode = React.useMemo(() => {
-    const value = stats?.loc_analyzed || 1000;
-    return value.toLocaleString();
-  }, [stats?.loc_analyzed]);
   const command = [
     'gh api \\',
     '-H "Accept: application/vnd.github+json" \\',
@@ -146,35 +123,7 @@ function LandingPage() {
         </div>
       )}
       <br />
-      <Typography.Title level={3}>
-        We have already processed over {analyzedCode} lines of code and
-        counting!
-      </Typography.Title>
-      <br />
-      <Col span={24}>
-        <a
-          href="https://github.com/frenchmajesty"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <img
-            className="social-icon"
-            src="./icons/github.svg"
-            alt="Github logo"
-          />
-        </a>
-        <a
-          href="https://twitter.com/frenchmajesty"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <img
-            className="social-icon"
-            src="./icons/twitter.svg"
-            alt="Twitter logo"
-          />
-        </a>
-      </Col>
+      <Footer />
       <SignUpModal
         open={showSignupModal}
         onClose={() => setShowSignupModal(false)}
