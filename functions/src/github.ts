@@ -1,7 +1,7 @@
 import { config, logger } from 'firebase-functions';
 import * as crypto from 'crypto';
 import { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/dist-types';
-import { App } from 'octokit';
+import { App, Octokit } from 'octokit';
 import { extensions } from './static_data';
 import { ReducedUpdatedFile } from './chat-gpt';
 import { GithubRequestParams } from './types';
@@ -191,11 +191,15 @@ export default class Github {
     return result;
   }
 
-  static async leaveComment(params: GithubRequestParams, comment: string) {
+  static async leaveComment(
+    comment: string,
+    octokit: Octokit,
+    params: GithubRequestParams,
+  ) {
     try {
       logger.info('Adding a comment to the PR..');
       const { repoOwner, repoName, pullNumber } = params;
-      await gh.octokit.rest.issues.createComment({
+      await octokit.rest.issues.createComment({
         owner: repoOwner,
         repo: repoName,
         issue_number: pullNumber,

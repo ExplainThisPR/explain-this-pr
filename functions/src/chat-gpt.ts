@@ -79,7 +79,7 @@ export default class ChatGPT {
         - Setup a listener for the AuthState of the user and update the Redux store with the current user
   
       `;
-      logger.info('GPT Request: ', { content });
+      logger.info('Making a GPT Request...');
       const { data } = await OpenAI.createChatCompletion({
         ...this.options,
         messages: [
@@ -87,9 +87,8 @@ export default class ChatGPT {
           { role: 'user', content },
         ],
       });
-      logger.info('GPT Response: ', {
+      logger.info('Handling GPT Response ', {
         usage: data.usage,
-        content: data.choices[0],
       });
       const message = data?.choices[0].message?.content;
       return message || '';
