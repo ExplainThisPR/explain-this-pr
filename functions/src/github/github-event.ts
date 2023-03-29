@@ -5,6 +5,7 @@ import {
   IssueCommentCreatedEvent,
 } from '@octokit/webhooks-types';
 import Github from '../github';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export default class GithubEvents {
   /**
@@ -28,7 +29,7 @@ export default class GithubEvents {
         .collection('Users')
         .doc(user.id)
         .update({
-          repos: admin.firestore.FieldValue.arrayRemove(...repoNames),
+          repos: FieldValue.arrayRemove(...repoNames),
         });
       return true;
     } catch (e) {
@@ -67,7 +68,7 @@ export default class GithubEvents {
         .collection('Users')
         .doc(user.id)
         .update({
-          repos: admin.firestore.FieldValue.arrayUnion(...repoNames),
+          repos: FieldValue.arrayUnion(...repoNames),
         });
       return true;
     } catch (e) {

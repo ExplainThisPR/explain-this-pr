@@ -1,5 +1,6 @@
 import { https, logger, config, runWith } from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import Github from './github';
 import {
   PullRequestLabeledEvent,
@@ -9,7 +10,6 @@ import {
   InstallationRepositoriesAddedEvent,
   InstallationRepositoriesRemovedEvent,
 } from '@octokit/webhooks-types';
-import { Octokit } from 'octokit';
 import { allowCors } from './helper';
 import Stripe from 'stripe';
 import ChatGPT from './chat-gpt';
@@ -251,8 +251,8 @@ async function updatePublicStats(loc_analyzed: number) {
       .firestore()
       .doc('/AdminDashboard/public')
       .update({
-        runs: admin.firestore.FieldValue.increment(1),
-        loc_analyzed: admin.firestore.FieldValue.increment(loc_analyzed),
+        runs: FieldValue.increment(1),
+        loc_analyzed: FieldValue.increment(loc_analyzed),
         last_run_at: new Date().toISOString(),
       });
     logger.info('Successfully updated public stats');
