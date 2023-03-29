@@ -184,4 +184,30 @@ export default class Github {
     logger.info(`Number of chunks to send: ${result.length}`);
     return result;
   }
+
+  static async leaveComment({
+    repoOwner,
+    repoName,
+    pullNumber,
+    comment,
+  }: {
+    repoOwner: string;
+    repoName: string;
+    pullNumber: number;
+    comment: string;
+  }) {
+    try {
+      logger.info('Adding a comment to the PR..');
+      await gh.octokit.rest.issues.createComment({
+        owner: repoOwner,
+        repo: repoName,
+        issue_number: pullNumber,
+        body: comment,
+      });
+      logger.info('Comment added to the PR:', { comment });
+    } catch (e: any) {
+      const error = e?.response?.data || e;
+      logger.error('Failed to create comment:' + e.message, error);
+    }
+  }
 }
