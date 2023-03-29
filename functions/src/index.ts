@@ -15,6 +15,7 @@ import Stripe from 'stripe';
 import ChatGPT from './chat-gpt';
 import GithubEvents from './github/github-event';
 import { GithubRequestParams } from './types';
+import Billing from './billing';
 
 admin.initializeApp();
 
@@ -205,8 +206,6 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     return;
   }
 
-  // @TODO Check if this repo is in list allowed for the user account before proceeding
-
   const payload = body as PullRequestLabeledEvent | IssueCommentCreatedEvent;
   const params: GithubRequestParams = {
     installationId: payload.installation?.id || 0,
@@ -234,7 +233,14 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   const totalChanges = filestoSend.reduce((acc, file) => acc + file.changes, 0);
   updatePublicStats(totalChanges);
 
-  // @TODO Check billing here limits for lines of code or if subscription is active
+  const billing = new Billing(octokit, params);
+  const billingIsGood = await billing.check(totalChanges);
+
+  if (!billingIsGood) {
+    response.status(400).send({
+      message: 'You have reached your plan limits for this month',
+    });
+  }
 
   const comment = await ChatGPT.explainThisPR(chunks);
   await Github.leaveComment(params, comment);
@@ -242,57 +248,6 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     comment,
   });
 });
-
-async function validateRepoCountLimit(
-  repoName: string,
-  repoOwner: string,
-  pullNumber: number,
-  octokit: Octokit,
-) {
-  /*
-  Find the user who owns the repo
-  Count the length of subs[] they have vs. the limit
-  If over, throw an error to end the request
-*/
-  try {
-    const query = await admin
-      .firestore()
-      .collection('Users')
-      .where(
-        'repos',
-        'array-contains',
-        `${repoOwner}/${repoName}`.toLowerCase(),
-      )
-      .get();
-    if (query.empty) {
-      return false;
-    }
-    const user = query.docs[0].data();
-    const { repos_limit } = user.usage;
-
-    if (user.repos.length > repos_limit) {
-      await octokit.rest.issues.createComment({
-        owner: repoOwner,
-        repo: repoName,
-        issue_number: pullNumber,
-        body: [
-          `You have reached the limit of ${repos_limit} repos.`,
-          `Please remove a repo from your account to resume the service.`,
-        ].join('\n'),
-      });
-      return false;
-    }
-    return true;
-  } catch (e) {
-    logger.error('Failed to validate subscription level', e);
-    return false;
-  }
-}
-
-/*
-When a user is created, save their limits on their account
-When a new repo is connected/removed to the app, find the user it belongs to and update their limits
-*/
 
 async function updatePublicStats(loc_analyzed: number) {
   try {
@@ -309,52 +264,3 @@ async function updatePublicStats(loc_analyzed: number) {
     logger.error('Failed to update public stats', err);
   }
 }
-
-/*
-async function validateCodeLimit(
-  LOC: number,
-  repoName: string,
-  repoOwner: string,
-  pullNumber: number,
-  octokit: Octokit | null,
-) {
-  /*
-  Find the user who owns the repo
-  Count the length of subs[] they have vs. the limit
-  If over, throw an error to end the request
-*
-try {
-  const query = await admin
-    .firestore()
-    .collection('Users')
-    .where(
-      'repos',
-      'array-contains',
-      `${repoOwner}/${repoName}`.toLowerCase(),
-    )
-    .get();
-  if (query.empty) {
-    return false;
-  }
-  const user = query.docs[0].data();
-  const { loc_limit } = user.usage;
-
-  if (LOC >= loc_limit) {
-    await octokit?.rest.issues.createComment({
-      owner: repoOwner,
-      repo: repoName,
-      issue_number: pullNumber,
-      body: [
-        `You have reached the limit of ${loc_limit} lines of code for this month.`,
-        `Wait until the next month to resume the service or upgrade your subscription.`,
-      ].join('\n'),
-    });
-    return false;
-  }
-  return true;
-} catch (e) {
-  logger.error('Failed to validate subscription level', e);
-  return false;
-}
-}
-*/
