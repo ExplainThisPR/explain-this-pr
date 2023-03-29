@@ -1,4 +1,4 @@
-import { https, logger, config, Response, Request } from 'firebase-functions';
+import { https, logger, config, runWith } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import Github, { PullRequestFiles } from './github';
 import {
@@ -9,7 +9,6 @@ import {
   InstallationRepositoriesAddedEvent,
   InstallationRepositoriesRemovedEvent,
 } from '@octokit/webhooks-types';
-import { Configuration, OpenAIApi } from 'openai';
 import { Octokit } from 'octokit';
 import { allowCors } from './helper';
 import Stripe from 'stripe';
@@ -19,10 +18,6 @@ import GithubEvents from './github/github-event';
 admin.initializeApp();
 
 const apiKey = config().openai.api_key;
-const configuration = new Configuration({
-  apiKey,
-});
-const OpenAI = new OpenAIApi(configuration);
 const stripeKey = config().stripe.api_key;
 const stripeEndpointSecret = config().stripe.webhook_secret;
 const stripe = new Stripe(stripeKey, {
@@ -127,7 +122,9 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
   response.send();
 });
 
-export const processRawDiffBody = https.onRequest(async (request, response) => {
+export const processRawDiffBody = runWith({
+  enforceAppCheck: false, // Enable one day... How to pass token to Axios request?
+}).https.onRequest(async (request, response) => {
   const isPreflight = allowCors(request, response);
   if (isPreflight) return;
 
@@ -179,25 +176,15 @@ export const githubWebhook = https.onRequest(async (request, response) => {
       (repo: any) => repo.full_name,
     );
     await handler.onRepoAdded(sender.id, repoNames);
+    return;
   } else if (eventType === 'repo_removed') {
     const payload = body as InstallationRepositoriesRemovedEvent;
     const repoNames = payload.repositories_removed.map(
       (repo: any) => repo.full_name,
     );
     await handler.onRepoRemoved(sender.id, repoNames);
+    return;
   }
-
-  /*
-   From this line below we are explaining a PR. Whether by comment or label or whatever.
-   --
-   1. Find the diff and check the length
-   2. Check here if the sender or the org is in good billing standing to run code analysis
-   3. If bad, return
-   4. send to GPT
-   5. post comment
-   6. update usage
-   -- 
-  */
 
   // @TODO Check if this repo is in list allowed for the user account before proceeding
 

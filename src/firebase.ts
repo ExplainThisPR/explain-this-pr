@@ -4,6 +4,7 @@ import { getAnalytics } from 'firebase/analytics';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getFunctions } from 'firebase/functions';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -18,6 +19,7 @@ const firebaseConfig = {
   appId: '1:365925585278:web:19073846dfacc129ec232f',
   measurementId: 'G-FB7XCWHRFH',
 };
+const captchaClientId = '6Lca10ElAAAAAPcl5hgTBiIb5TdT44UoEX74CaTL';
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
@@ -25,3 +27,7 @@ export const analytics = getAnalytics(app);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
+export const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider(captchaClientId),
+  isTokenAutoRefreshEnabled: true,
+});
