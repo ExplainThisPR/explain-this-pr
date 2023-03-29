@@ -123,16 +123,14 @@ export const processRawDiffBody = https.onRequest(async (request, response) => {
   if (isPreflight) return;
 
   const body = request.body;
-  const validated = await validateDiffFormat(body.diff_body);
-  if (!validated) {
+  const content = Github.isDiffProcessable(body.diff_body);
+  if (!content) {
     response.status(400).send({
       message:
         'The diff provided is not valid. Did you run the command properly?',
     });
     return;
   }
-
-  const content: PullRequestFiles = JSON.parse(body.diff_body);
 
   const filestoAnalyze = Github.filterOutFiltersToAnalyze(content);
   const filenames = filestoAnalyze.map((file) => file.filename);
@@ -403,28 +401,6 @@ async function fetchDiff(request: Request, response: Response) {
     repoName,
     repoOwner,
   };
-}
-
-/**
- * Validate if the content is in the correct format of PullRequestFiles
- * @param content The content to validate
- * @returns
- */
-async function validateDiffFormat(content: string) {
-  try {
-    const parsed = JSON.parse(content) as PullRequestFiles;
-    const first = parsed[0];
-    if (!first || !first.filename || !first.status || !first.changes) {
-      return false;
-    }
-
-    if (parsed.length === 0) {
-      return false;
-    }
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
 
 async function getSummaryForPR(content: string) {
