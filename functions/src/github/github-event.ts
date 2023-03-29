@@ -23,13 +23,18 @@ export default class GithubEvents {
         return false;
       }
 
-      // Remove repo from User document
+      logger.info('[onRepoRemoved] Removing repo from user...', {
+        githubId,
+        repoNames,
+      });
       await admin
         .firestore()
         .doc(user.id)
         .update({
           repos: FieldValue.arrayRemove(...repoNames),
+          'usage.repos': FieldValue.increment(-repoNames.length),
         });
+      logger.info('[onRepoRemoved] Repos successfully removed from user');
       return true;
     } catch (e) {
       logger.error(
@@ -56,18 +61,24 @@ export default class GithubEvents {
       }
 
       const newTotal = user.repos.length + repoNames.length;
-      if (newTotal > user.usage.repos_limit) {
+      if (newTotal > user.usage.repos_limit + 1) {
+        // +1 in case the user is simultaneously removing a repo
         logger.warn('[onRepoAdded] User has reached repo limit', { githubId });
         return false;
       }
 
-      // Add repo to User document
+      logger.info('[onRepoAdded] Adding repo to user...', {
+        githubId,
+        repoNames,
+      });
       await admin
         .firestore()
         .doc(user.id)
         .update({
           repos: FieldValue.arrayUnion(...repoNames),
+          'usage.repos': FieldValue.increment(repoNames.length),
         });
+      logger.info('[onRepoAdded] Repos successfully added to user');
       return true;
     } catch (e) {
       logger.error('[onRepoAdded] Failed to add repo to user', { githubId }, e);
