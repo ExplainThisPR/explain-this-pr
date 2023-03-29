@@ -118,6 +118,68 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
   response.send();
 });
 
+export const processRawDiffBody = https.onRequest(async (request, response) => {
+  const isPreflight = allowCors(request, response);
+  if (isPreflight) return;
+
+  const body = request.body;
+  const validated = await validateDiffFormat(body.diff_body);
+  if (!validated) {
+    response.status(400).send({
+      message:
+        'The diff provided is not valid. Did you run the command properly?',
+    });
+    return;
+  }
+
+  const content: PullRequestFiles = JSON.parse(body.diff_body);
+
+  const filestoAnalyze = Github.filterOutFiltersToAnalyze(content);
+  const filenames = filestoAnalyze.map((file) => file.filename);
+  const chunks = Github.breakFilesIntoChunks(filestoAnalyze);
+  logger.info(`Number of chunks to send: ${chunks.length}`);
+  logger.info('files to process:', filenames);
+
+  const totalChanges = filestoAnalyze.reduce(
+    (acc, file) => acc + file.changes,
+    0,
+  );
+  updatePublicStats(totalChanges);
+
+  let responses = await Promise.all(
+    chunks.map(async (chunk) => {
+      const combined = JSON.stringify(chunk);
+      if (combined.length < 100) {
+        return '';
+      }
+
+      const gpt = await getSummaryForPR(combined);
+      const message = gpt?.choices[0].message?.content;
+      return message || '';
+    }),
+  );
+  responses = responses.filter(Boolean);
+
+  const prefix = [
+    '## :robot: Explain this PR :robot:',
+    'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
+    'Please [share your feedback](https://tally.so/r/3jZG9E) with me. :heart:',
+  ];
+  if (responses.length === 0) {
+    logger.error('No responses from GPT');
+    responses = [
+      'No changes to analyze. Something likely went wrong. :thinking_face: We will look into it!',
+      'Sometimes re-running the analysis helps with timeout issues. :shrug:',
+    ];
+  }
+
+  const comment = [...prefix, ...responses].join('\n');
+
+  response.send({
+    comment,
+  });
+});
+
 export const githubWebhook = https.onRequest(async (request, response) => {
   const isPreflight = allowCors(request, response);
   if (isPreflight) return;
@@ -131,6 +193,14 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   let octokit: Octokit | null = null;
   let content: PullRequestFiles = [];
 
+  /*
+    Validate the github webhook request is good
+    Check he billing status of the user making the request
+    Make GPT request
+    Post-cleanup
+      - Update the user's & app global usage
+      - Post a comment on the PR
+  */
   if (body.action) {
     const fetched = await fetchDiff(request, response);
     if (!fetched) {
