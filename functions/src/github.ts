@@ -13,7 +13,8 @@ export type PullRequestFiles =
   RestEndpointMethodTypes['pulls']['listFiles']['response']['data'];
 
 export type RequestType =
-  | 'explain_pr'
+  | 'explain_pr_by_label'
+  | 'explain_pr_by_comment'
   | 'repo_added'
   | 'repo_removed'
   | 'bad_request';
@@ -54,7 +55,7 @@ export default class Github {
     signature: string,
     body: Record<string, any>,
   ): RequestType {
-    const signatureGood = Github.verifySignature(
+    const signatureGood = this.verifySignature(
       JSON.stringify(body),
       signature || '',
     );
@@ -66,7 +67,7 @@ export default class Github {
 
     const label = body.label?.name?.toLowerCase();
     if (body.action === 'labeled' && label === 'explainthispr') {
-      return 'explain_pr';
+      return 'explain_pr_by_label';
     } else if (
       body.action === 'added' &&
       (body.repositories_added?.length || 0) > 0

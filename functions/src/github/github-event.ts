@@ -3,32 +3,27 @@ import { logger } from 'firebase-functions';
 
 export default class GithubEvents {
   /**
-   * Attempts to remove the repo from the user document in Firestore
+   * Attempts to remove the repos from the user document in Firestore
    * @param githubId The github id of the user
-   * @param repoName The full name of the repo
+   * @param repoNames The full name of the repos
    * @returns True if operation was successful, false otherwise
    */
-  async onRepoRemoved(githubId: string, repoName: string) {
+  async onRepoRemoved(githubId: number, repoNames: string[]) {
     try {
       // Find user by githubId
-      const query = await admin
-        .firestore()
-        .collection('Users')
-        .where('githubId', '==', githubId)
-        .get();
-      if (query.empty) {
+      const user = await this.findUserByGithubId(githubId);
+      if (!user) {
         logger.warn('[onRepoRemoved] User not found', { githubId });
         return false;
       }
-      const user = query.docs[0].data();
 
-      // Remove repo to user
+      // Remove repo from User document
       await admin
         .firestore()
         .collection('Users')
         .doc(user.id)
         .update({
-          repos: admin.firestore.FieldValue.arrayRemove(repoName),
+          repos: admin.firestore.FieldValue.arrayRemove(...repoNames),
         });
       return true;
     } catch (e) {
@@ -42,41 +37,51 @@ export default class GithubEvents {
   }
 
   /**
-   * Attempts to add the repo to the user document in Firestore
+   * Attempts to add the repos to the user document in Firestore
    * @param githubId The github id of the user
-   * @param repoName The full name of the repo
+   * @param repoNames The full name of the repo
    * @returns True if operation was successful, false otherwise
    */
-  async onRepoAdded(githubId: string, repoName: string) {
+  async onRepoAdded(githubId: number, repoNames: string[]) {
     try {
-      // Find user by githubId
-      const query = await admin
-        .firestore()
-        .collection('Users')
-        .where('githubId', '==', githubId)
-        .get();
-      if (query.empty) {
+      const user = await this.findUserByGithubId(githubId);
+      if (!user) {
         logger.warn('[onRepoAdded] User not found', { githubId });
         return false;
       }
-      const user = query.docs[0].data();
-      if (user.repos.length >= user.usage.repos_limit) {
+
+      const newTotal = user.repos.length + repoNames.length;
+      if (newTotal > user.usage.repos_limit) {
         logger.warn('[onRepoAdded] User has reached repo limit', { githubId });
         return false;
       }
 
-      // Add repo to user
+      // Add repo to User document
       await admin
         .firestore()
         .collection('Users')
         .doc(user.id)
         .update({
-          repos: admin.firestore.FieldValue.arrayUnion(repoName),
+          repos: admin.firestore.FieldValue.arrayUnion(...repoNames),
         });
       return true;
     } catch (e) {
-      logger.error('[onRepoAdded ]Failed to add repo to user', { githubId }, e);
+      logger.error('[onRepoAdded] Failed to add repo to user', { githubId }, e);
       return false;
     }
+  }
+
+  private async findUserByGithubId(githubId: number) {
+    const query = await admin
+      .firestore()
+      .collection('Users')
+      .where('githubId', '==', githubId)
+      .get();
+
+    if (query.empty) {
+      return null;
+    }
+    const user = query.docs[0].data();
+    return user;
   }
 }
