@@ -12,7 +12,8 @@ import { FilterFilled } from '@ant-design/icons';
 import Footer from '../../components/Footer';
 import { Link } from 'react-router-dom';
 
-const { REACT_APP_PLAYGROUND_API: PLAYGROUND_API } = process.env;
+const { REACT_APP_PLAYGROUND_API: PLAYGROUND_API, REACT_APP_NAME: APP_NAME } =
+  process.env;
 function Playground() {
   const analytics = getAnalytics();
   const [diff, setDiff] = React.useState('');
@@ -30,10 +31,13 @@ function Playground() {
       console.log(data);
       setResult(data.comment);
       setLoading(false);
+      if (!data.comment) {
+        message.error('Sorry, your request failed. Please try again');
+      }
     } catch (error) {
       setLoading(false);
       console.error(error);
-      message.error('Your request failed. Please try again');
+      message.error('Sorry, your request failed. Please try again');
     }
   };
   const openSignupButton = () => {
@@ -53,7 +57,7 @@ function Playground() {
   return (
     <div className="page-container">
       <Helmet>
-        <title>ExplainThisPR - Playground</title>
+        <title>Playground - {APP_NAME}</title>
       </Helmet>
       <header>
         <Row justify="space-between">
@@ -67,7 +71,7 @@ function Playground() {
           </Col>
         </Row>
       </header>
-      <Typography.Title>ExplainThisPR</Typography.Title>
+      <Typography.Title>{APP_NAME}</Typography.Title>
       <Typography.Title level={4}>
         1. Use the{' '}
         <a
@@ -132,7 +136,8 @@ function Playground() {
       ) : (
         <div className="markdown-container font-mono">
           <Typography.Text className="font-mono">
-            Well, what are you waiting for?
+            Well, what are you waiting for? Run the emulator above and the
+            explanation will appear here.
           </Typography.Text>
         </div>
       )}
