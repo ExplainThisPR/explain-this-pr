@@ -1,6 +1,6 @@
 import { https, logger, config, runWith } from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import Github, { PullRequestFiles } from './github';
+import Github from './github';
 import {
   PullRequestLabeledEvent,
   IssueCommentCreatedEvent,
@@ -14,10 +14,10 @@ import { allowCors } from './helper';
 import Stripe from 'stripe';
 import ChatGPT from './chat-gpt';
 import GithubEvents from './github/github-event';
+import { GithubRequestParams } from './types';
 
 admin.initializeApp();
 
-const apiKey = config().openai.api_key;
 const stripeKey = config().stripe.api_key;
 const stripeEndpointSecret = config().stripe.webhook_secret;
 const stripe = new Stripe(stripeKey, {
@@ -165,38 +165,61 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     return;
   }
 
+  const action = body.action;
   const sender = body.sender as GithubUser;
   const org = body.organization as GithubOrg | null;
-  console.log({ sender, org, action: body.action });
+  console.log({ action, sender, org });
 
   const handler = new GithubEvents();
   if (eventType === 'repo_added') {
     const payload = body as InstallationRepositoriesAddedEvent;
-    const repoNames = payload.repositories_added.map(
-      (repo: any) => repo.full_name,
-    );
-    await handler.onRepoAdded(sender.id, repoNames);
+    const repoNames = payload.repositories_added.map((repo) => repo.full_name);
+    const success = await handler.onRepoAdded(sender.id, repoNames);
+
+    if (success) {
+      response.status(200).send({
+        message: `${repoNames.length} repos added`,
+      });
+    } else {
+      response.status(400).send({
+        message: 'Failed to added repos to this account',
+      });
+    }
     return;
   } else if (eventType === 'repo_removed') {
     const payload = body as InstallationRepositoriesRemovedEvent;
     const repoNames = payload.repositories_removed.map(
-      (repo: any) => repo.full_name,
+      (repo) => repo.full_name,
     );
-    await handler.onRepoRemoved(sender.id, repoNames);
+    const success = await handler.onRepoRemoved(sender.id, repoNames);
+
+    if (success) {
+      response.status(200).send({
+        message: `${repoNames.length} repos removed`,
+      });
+    } else {
+      response.status(400).send({
+        message: 'Failed to remove repos from user account',
+      });
+    }
     return;
   }
 
   // @TODO Check if this repo is in list allowed for the user account before proceeding
 
   const payload = body as PullRequestLabeledEvent | IssueCommentCreatedEvent;
-  const installationId = payload.installation?.id || 0;
-  const repoName = payload.repository.name;
-  const repoOwner = payload.repository.owner.login;
-  const pullNumber =
-    payload.action === 'labeled'
-      ? payload.pull_request.number
-      : payload.issue.number;
+  const params: GithubRequestParams = {
+    installationId: payload.installation?.id || 0,
+    repoName: payload.repository.name,
+    repoOwner: payload.repository.owner.login,
+    pullNumber:
+      payload.action === 'labeled'
+        ? payload.pull_request.number
+        : payload.issue.number,
+  };
+  const { installationId, repoName, repoOwner, pullNumber } = params;
 
+  // Fetch the files changed in the PR
   const octokit = await Github.createInstance(installationId);
   const { data: files } = await octokit.rest.pulls.listFiles({
     owner: repoOwner,
@@ -204,6 +227,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
     pull_number: pullNumber,
   });
 
+  // Format them into a format that ChatGPT can work with
   const filestoSend = Github.filterOutFiltersToAnalyze(files);
   const chunks = Github.breakFilesIntoChunks(filestoSend);
 
@@ -213,12 +237,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   // @TODO Check billing here limits for lines of code or if subscription is active
 
   const comment = await ChatGPT.explainThisPR(chunks);
-  await Github.leaveComment({
-    repoName,
-    repoOwner,
-    pullNumber,
-    comment,
-  });
+  await Github.leaveComment(params, comment);
   response.send({
     comment,
   });

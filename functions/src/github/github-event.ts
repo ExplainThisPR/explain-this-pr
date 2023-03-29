@@ -1,5 +1,10 @@
 import * as admin from 'firebase-admin';
 import { logger } from 'firebase-functions';
+import {
+  PullRequestLabeledEvent,
+  IssueCommentCreatedEvent,
+} from '@octokit/webhooks-types';
+import Github from '../github';
 
 export default class GithubEvents {
   /**
@@ -69,6 +74,32 @@ export default class GithubEvents {
       logger.error('[onRepoAdded] Failed to add repo to user', { githubId }, e);
       return false;
     }
+  }
+
+  /**
+   * Connect to the Github API and get the list of files in the PR
+   * @param payload The Github webhook payload
+   * @returns The list of files in the PR
+   */
+  async onJobQueued(
+    payload: PullRequestLabeledEvent | IssueCommentCreatedEvent,
+  ) {
+    const installationId = payload.installation?.id || 0;
+    const repoName = payload.repository.name;
+    const repoOwner = payload.repository.owner.login;
+    const pullNumber =
+      payload.action === 'labeled'
+        ? payload.pull_request.number
+        : payload.issue.number;
+
+    const octokit = await Github.createInstance(installationId);
+    const { data: files } = await octokit.rest.pulls.listFiles({
+      owner: repoOwner,
+      repo: repoName,
+      pull_number: pullNumber,
+    });
+
+    return files;
   }
 
   private async findUserByGithubId(githubId: number) {

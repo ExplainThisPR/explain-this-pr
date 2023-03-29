@@ -4,6 +4,7 @@ import { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/d
 import { App } from 'octokit';
 import { extensions } from './static_data';
 import { ReducedUpdatedFile } from './chat-gpt';
+import { GithubRequestParams } from './types';
 
 const appId = config().github.app_id;
 const privateKey = config().github.private_key;
@@ -68,6 +69,11 @@ export default class Github {
     const label = body.label?.name?.toLowerCase();
     if (body.action === 'labeled' && label === 'explainthispr') {
       return 'explain_pr_by_label';
+    } else if (
+      body.action === 'created' &&
+      body.comment?.body?.toLowerCase() === '@explainthispr'
+    ) {
+      return 'explain_pr_by_comment';
     } else if (
       body.action === 'added' &&
       (body.repositories_added?.length || 0) > 0
@@ -185,19 +191,10 @@ export default class Github {
     return result;
   }
 
-  static async leaveComment({
-    repoOwner,
-    repoName,
-    pullNumber,
-    comment,
-  }: {
-    repoOwner: string;
-    repoName: string;
-    pullNumber: number;
-    comment: string;
-  }) {
+  static async leaveComment(params: GithubRequestParams, comment: string) {
     try {
       logger.info('Adding a comment to the PR..');
+      const { repoOwner, repoName, pullNumber } = params;
       await gh.octokit.rest.issues.createComment({
         owner: repoOwner,
         repo: repoName,
