@@ -205,7 +205,7 @@ export default class Github {
         issue_number: pullNumber,
         body: comment,
       });
-      logger.info('Comment added to the PR:', { comment });
+      logger.info('Comment added to the PR!');
     } catch (e: any) {
       const error = e?.response?.data || e;
       logger.error('Failed to create comment:' + e.message, error);

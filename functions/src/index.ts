@@ -120,7 +120,9 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
     }
   }
 
-  response.send();
+  response.send({
+    received: true,
+  });
 });
 
 export const processRawDiffBody = runWith({
@@ -232,12 +234,13 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   updatePublicStats(totalChanges);
 
   const billing = new Billing(octokit, params);
-  const billingIsGood = await billing.check(totalChanges);
+  const billingIsGood = await billing.checkStatus(totalChanges);
 
   if (!billingIsGood) {
     response.status(400).send({
       message: 'You have reached your plan limits for this month',
     });
+    return;
   }
 
   const comment = await ChatGPT.explainThisPR(chunks);

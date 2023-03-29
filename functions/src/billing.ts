@@ -17,9 +17,9 @@ export default class Billing {
     const { repoName, repoOwner } = this.params;
     const fullName = `${repoOwner}/${repoName}`.toLowerCase();
     this.user = await this.findUserByRepo(fullName);
+
     if (!this.user) {
       logger.warn('User not found based on repo', { fullName });
-      return;
     }
   }
 
@@ -28,7 +28,7 @@ export default class Billing {
    * @param linesChanged The number of lines of code in the pull request
    * @returns
    */
-  async check(linesChanged: number) {
+  async checkStatus(linesChanged: number) {
     await this.init();
     if (!this.user) {
       return false;
