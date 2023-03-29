@@ -2,9 +2,8 @@ import { config, logger } from 'firebase-functions';
 import * as crypto from 'crypto';
 import { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/dist-types';
 import { App } from 'octokit';
-import { PullRequestLabeledEvent } from '@octokit/webhooks-types';
 import { extensions } from './static_data';
-import { ReducedUpdatedFile } from './ChatGPT';
+import { ReducedUpdatedFile } from './chat-gpt';
 
 const appId = config().github.app_id;
 const privateKey = config().github.private_key;
