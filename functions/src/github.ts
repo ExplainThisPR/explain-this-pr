@@ -147,6 +147,8 @@ export default class Github {
 
     logger.info(`Files before filter: ${files.length}`);
     logger.info(`Files after filter: ${result.length}`);
+    const filenames = files.map((file) => file.filename);
+    logger.info('files to process:', filenames);
     return result;
   }
 
@@ -178,6 +180,7 @@ export default class Github {
       }
     });
 
+    logger.info(`Number of chunks to send: ${result.length}`);
     return result;
   }
 }

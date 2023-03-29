@@ -1,6 +1,6 @@
 import { https, logger, config, Response, Request } from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import Github, { PullRequestFiles } from './github';
+import Github, { PullRequestFiles } from './Github';
 import { PullRequestLabeledEvent } from '@octokit/webhooks-types';
 import { Configuration, OpenAIApi } from 'openai';
 import { Octokit } from 'octokit';
@@ -133,10 +133,7 @@ export const processRawDiffBody = https.onRequest(async (request, response) => {
   }
 
   const filestoAnalyze = Github.filterOutFiltersToAnalyze(content);
-  const filenames = filestoAnalyze.map((file) => file.filename);
   const chunks = Github.breakFilesIntoChunks(filestoAnalyze);
-  logger.info(`Number of chunks to send: ${chunks.length}`);
-  logger.info('files to process:', filenames);
 
   const totalChanges = filestoAnalyze.reduce(
     (acc, file) => acc + file.changes,
@@ -239,10 +236,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   }
 
   const filestoAnalyze = Github.filterOutFiltersToAnalyze(content);
-  const filenames = filestoAnalyze.map((file) => file.filename);
   const chunks = Github.breakFilesIntoChunks(filestoAnalyze);
-  logger.info(`Number of chunks to send: ${chunks.length}`);
-  logger.info('files to process:', filenames);
 
   const totalChanges = filestoAnalyze.reduce(
     (acc, file) => acc + file.changes,
