@@ -6,6 +6,7 @@ import { Configuration, OpenAIApi } from 'openai';
 import { Octokit } from 'octokit';
 import { allowCors } from './helper';
 import Stripe from 'stripe';
+import ChatGPT from './ChatGPT';
 
 admin.initializeApp();
 
@@ -141,34 +142,7 @@ export const processRawDiffBody = https.onRequest(async (request, response) => {
   );
   updatePublicStats(totalChanges);
 
-  let responses = await Promise.all(
-    chunks.map(async (chunk) => {
-      const combined = JSON.stringify(chunk);
-      if (combined.length < 100) {
-        return '';
-      }
-
-      const gpt = await getSummaryForPR(combined);
-      const message = gpt?.choices[0].message?.content;
-      return message || '';
-    }),
-  );
-  responses = responses.filter(Boolean);
-
-  const prefix = [
-    '## :robot: Explain this PR :robot:',
-    'Here is a summary of what I noticed. I am a bot in Beta, so I might be wrong. :smiling_face_with_tear:',
-    'Please [share your feedback](https://tally.so/r/3jZG9E) with me. :heart:',
-  ];
-  if (responses.length === 0) {
-    logger.error('No responses from GPT');
-    responses = [
-      'No changes to analyze. Something likely went wrong. :thinking_face: We will look into it!',
-      'Sometimes re-running the analysis helps with timeout issues. :shrug:',
-    ];
-  }
-
-  const comment = [...prefix, ...responses].join('\n');
+  const comment = ChatGPT.explainThisPR(chunks);
 
   response.send({
     comment,

@@ -4,6 +4,7 @@ import { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/d
 import { App } from 'octokit';
 import { PullRequestLabeledEvent } from '@octokit/webhooks-types';
 import { extensions } from './static_data';
+import { ReducedUpdatedFile } from './ChatGPT';
 
 const appId = config().github.app_id;
 const privateKey = config().github.private_key;
@@ -159,7 +160,7 @@ export default class Github {
    * @returns
    */
   static breakFilesIntoChunks(files: PullRequestFiles) {
-    const result: { filename: string; content: string }[][] = [];
+    const result: ReducedUpdatedFile[][] = [];
     let index = 0;
     let totalChar = 0;
     const limit = 9000;
