@@ -77,7 +77,7 @@ export default function SignUpModal({ open, onClose }: Props) {
       // Create a user document in the User collection
       const ref = doc(db, 'Users', data.user.uid);
       const userDoc = await setDoc(ref, {
-        id: '/Users/' + data.user.uid,
+        id: 'Users/' + data.user.uid,
         uid: data.user.uid,
         email: data.user.email,
         name: data.user.displayName,

@@ -26,7 +26,6 @@ export default class GithubEvents {
       // Remove repo from User document
       await admin
         .firestore()
-        .collection('Users')
         .doc(user.id)
         .update({
           repos: FieldValue.arrayRemove(...repoNames),
@@ -65,7 +64,6 @@ export default class GithubEvents {
       // Add repo to User document
       await admin
         .firestore()
-        .collection('Users')
         .doc(user.id)
         .update({
           repos: FieldValue.arrayUnion(...repoNames),
@@ -107,7 +105,7 @@ export default class GithubEvents {
     const query = await admin
       .firestore()
       .collection('Users')
-      .where('githubId', '==', githubId)
+      .where('githubId', '==', githubId.toString())
       .get();
 
     if (query.empty) {
