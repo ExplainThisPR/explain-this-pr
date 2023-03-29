@@ -2,6 +2,7 @@ node_modules
 build
 coverage
 .DS_STORE
-*.env
+*.env*
 tmp
 *.log
+*.cache
