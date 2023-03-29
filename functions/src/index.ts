@@ -146,9 +146,7 @@ export const processRawDiffBody = runWith({
   updatePublicStats(totalChanges);
 
   const comment = await ChatGPT.explainThisPR(chunks);
-  response.send({
-    comment,
-  });
+  response.send({ comment });
 });
 
 export const githubWebhook = https.onRequest(async (request, response) => {
@@ -244,9 +242,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
 
   const comment = await ChatGPT.explainThisPR(chunks);
   await Github.leaveComment(params, comment);
-  response.send({
-    comment,
-  });
+  response.send({ comment });
 });
 
 async function updatePublicStats(loc_analyzed: number) {
