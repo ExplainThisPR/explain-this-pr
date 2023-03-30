@@ -1,7 +1,5 @@
 # TODO
 
-- Creat github secret FIREBASE_SERVICE_ACCOUNT_EXPLAIN_THIS_PR with service acc JSON.
-  https://github.com/FrenchMajesty/explain-this-pr/settings/secrets
 - Add the Firebase Functions to the deploy script as well (on main branch only)
 - Change the playground endpoint to be name-callable + App Check to prevent abuse
 - Add an account management page for the Stripe subscription on the frontend
