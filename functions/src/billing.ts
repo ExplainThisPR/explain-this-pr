@@ -72,7 +72,7 @@ export default class Billing {
       return false;
     }
 
-    return this.user.repos.length < this.user.usage.repos_limit;
+    return this.user.repos.length <= this.user.usage.repos_limit;
   }
 
   /**
