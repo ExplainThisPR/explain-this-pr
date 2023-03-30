@@ -1,5 +1,4 @@
 import { Button, Col, Input, Row, Typography, message, Divider } from 'antd';
-import axios from 'axios';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGemoji from 'remark-gemoji';
@@ -11,9 +10,17 @@ import { getAnalytics, logEvent } from 'firebase/analytics';
 import { FilterFilled } from '@ant-design/icons';
 import Footer from '../../components/Footer';
 import { Link } from 'react-router-dom';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const { REACT_APP_PLAYGROUND_API: PLAYGROUND_API, REACT_APP_NAME: APP_NAME } =
   process.env;
+
+const functions = getFunctions();
+const analyzePlaygroundDiff = httpsCallable<
+  { diff_body: string },
+  { comment: string }
+>(functions, PLAYGROUND_API!);
+
 function Playground() {
   const analytics = getAnalytics();
   const [diff, setDiff] = React.useState('');
@@ -25,9 +32,7 @@ function Playground() {
     try {
       logEvent(analytics, 'submit_explain_form');
       setLoading(true);
-      const { data } = await axios.post(PLAYGROUND_API!, {
-        diff_body: diff,
-      });
+      const { data } = await analyzePlaygroundDiff({ diff_body: diff });
       console.log(data);
       setResult(data.comment);
       setLoading(false);
@@ -36,7 +41,7 @@ function Playground() {
       }
     } catch (error) {
       setLoading(false);
-      console.error(error);
+      console.error('Failed to make request to explain this diff', error);
       message.error('Sorry, your request failed. Please try again');
     }
   };

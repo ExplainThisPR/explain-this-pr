@@ -126,19 +126,22 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
 });
 
 export const processRawDiffBody = runWith({
-  enforceAppCheck: false, // Enable one day... How to pass token to Axios request?
-}).https.onRequest(async (request, response) => {
-  const isPreflight = allowCors(request, response);
-  if (isPreflight) return;
+  enforceAppCheck: true,
+}).https.onCall(async (body, context) => {
+  logger.info('processRawDiffBody', body);
+  if (context.app === undefined) {
+    throw new https.HttpsError(
+      'failed-precondition',
+      'The function must be called from an App Check verified app.',
+    );
+  }
 
-  const body = request.body;
   const content = Github.isDiffProcessable(body.diff_body);
   if (!content) {
-    response.status(400).send({
-      message:
-        'The diff provided is not valid. Did you run the command properly?',
-    });
-    return;
+    throw new https.HttpsError(
+      'invalid-argument',
+      'The diff provided is not valid. Did you run the command properly?',
+    );
   }
 
   const filestoSend = Github.filterOutFiltersToAnalyze(content);
@@ -148,7 +151,7 @@ export const processRawDiffBody = runWith({
   updatePublicStats(totalChanges);
 
   const comment = await ChatGPT.explainThisPR(chunks);
-  response.send({ comment });
+  return { comment };
 });
 
 export const githubWebhook = https.onRequest(async (request, response) => {
