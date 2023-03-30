@@ -24,6 +24,12 @@ const firebaseConfig = {
 };
 const captchaClientId = '6Lca10ElAAAAAPcl5hgTBiIb5TdT44UoEX74CaTL';
 
+const { REACT_APP_APPCHECK_DEBUG } = process.env;
+
+// @ts-ignore
+// eslint-disable-next-line no-restricted-globals
+self.FIREBASE_APPCHECK_DEBUG_TOKEN = REACT_APP_APPCHECK_DEBUG === 'true';
+
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 export const analytics = getAnalytics(app);
