@@ -1,7 +1,7 @@
 import { logger, config } from 'firebase-functions';
 import { Configuration, CreateChatCompletionRequest, OpenAIApi } from 'openai';
+import { ReducedUpdatedFile } from './types';
 
-export type ReducedUpdatedFile = { filename: string; content: string };
 const apiKey = config().openai.api_key;
 const configuration = new Configuration({
   apiKey,

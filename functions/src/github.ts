@@ -1,24 +1,18 @@
 import { config, logger } from 'firebase-functions';
 import * as crypto from 'crypto';
-import { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/dist-types';
 import { App, Octokit } from 'octokit';
 import { extensions } from './static_data';
-import { ReducedUpdatedFile } from './chat-gpt';
-import { GithubRequestParams } from './types';
+import {
+  GithubRequestParams,
+  ReducedUpdatedFile,
+  RequestType,
+  PullRequestFiles,
+} from './types';
 
 const appId = config().github.app_id;
 const privateKey = config().github.private_key;
 const gh = new App({ appId, privateKey });
 
-export type PullRequestFiles =
-  RestEndpointMethodTypes['pulls']['listFiles']['response']['data'];
-
-export type RequestType =
-  | 'explain_pr_by_label'
-  | 'explain_pr_by_comment'
-  | 'repo_added'
-  | 'repo_removed'
-  | 'bad_request';
 export default class Github {
   static createInstance(installationId: number) {
     return gh.getInstallationOctokit(installationId);
