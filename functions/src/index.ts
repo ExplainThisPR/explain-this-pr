@@ -244,7 +244,10 @@ export const githubWebhook = https.onRequest(async (request, response) => {
   }
 
   const comment = await ChatGPT.explainThisPR(chunks);
-  await Github.leaveComment(comment, octokit, params);
+  await Promise.all([
+    Github.leaveComment(comment, octokit, params),
+    billing.updateUsage(totalChanges),
+  ]);
   response.send({ comment });
 });
 

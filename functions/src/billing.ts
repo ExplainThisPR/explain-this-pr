@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import { Octokit } from 'octokit';
 import { logger } from 'firebase-functions';
+import { FieldValue } from 'firebase-admin/firestore';
 import { GithubRequestParams } from './types';
 
 export default class Billing {
@@ -19,7 +20,7 @@ export default class Billing {
     this.user = await this.findUserByRepo(fullName);
 
     if (!this.user) {
-      logger.warn('User not found based on repo', { fullName });
+      logger.warn(`User not found based on repo: "${fullName}"`);
     }
   }
 
@@ -43,6 +44,23 @@ export default class Billing {
     }
 
     return true;
+  }
+
+  async updateUsage(linesChanged: number) {
+    try {
+      if (!this.user) {
+        return;
+      }
+      // Update the user doc in Firestore by incrementing the loc
+      await admin
+        .firestore()
+        .doc(this.user.id)
+        .update({
+          'usage.loc': FieldValue.increment(linesChanged),
+        });
+    } catch (e) {
+      logger.error('Failed to update usage', e);
+    }
   }
 
   /**
