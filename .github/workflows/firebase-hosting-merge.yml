@@ -8,6 +8,12 @@ name: Deploy to Firebase Hosting on merge
       - main
     paths-ignore:
       - 'functions/**'
+env:
+  REACT_APP_NAME: ${{ secrets.REACT_APP_NAME }}
+  REACT_APP_PLAYGROUND_API: ${{ secrets.REACT_APP_PLAYGROUND_API }}
+  REACT_APP_STRIPE_STARTER_LINK: ${{ secrets.REACT_APP_STRIPE_STARTER_LINK }}
+  REACT_APP_STRIPE_PRO_LINK: ${{ secrets.REACT_APP_STRIPE_PRO_LINK }}
+  REACT_APP_APPCHECK_DEBUG: ${{ secrets.REACT_APP_APPCHECK_DEBUG }}
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
