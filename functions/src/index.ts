@@ -183,7 +183,7 @@ export const githubWebhook = https.onRequest(async (request, response) => {
       });
     } else {
       response.status(400).send({
-        message: 'Failed to added repos to this account',
+        message: 'Failed to add repos to this account',
       });
     }
     return;
