@@ -4,7 +4,6 @@
 
 [![Functions Services](https://github.com/FrenchMajesty/explain-this-pr/actions/workflows/firebase-functions-merge.yml/badge.svg?branch=main)](https://github.com/FrenchMajesty/explain-this-pr/actions/workflows/firebase-functions-merge.yml)
 
-- Add the Firebase Functions to the deploy script as well (on main branch only)
 - Change the playground endpoint to be name-callable + App Check to prevent abuse
 - Add an account management page for the Stripe subscription on the frontend
 

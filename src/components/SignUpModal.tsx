@@ -107,7 +107,7 @@ export default function SignUpModal({ open, onClose }: Props) {
     <Modal open={open} onCancel={onClose} footer={null} width={800}>
       <Row gutter={8}>
         {pricingTiers.map((tier, i) => (
-          <Col span={8}>
+          <Col key={tier.name} span={8}>
             <div className="pricing-tier">
               <Typography.Title level={4}>{tier.name}</Typography.Title>
               <Typography.Title level={2}>
@@ -117,7 +117,7 @@ export default function SignUpModal({ open, onClose }: Props) {
               <Divider />
               <ul>
                 {tier.features.map((feature) => (
-                  <li>{feature}</li>
+                  <li key={`${tier}-${feature}`}>{feature}</li>
                 ))}
               </ul>
               <Button
