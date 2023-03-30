@@ -37,6 +37,7 @@ export default class Billing {
 
     const codeLimit = this.isWithinCodeLimit(linesChanged);
     const repoLimit = this.isWithinRepoLimit();
+
     if (!codeLimit || !repoLimit) {
       const issue = !codeLimit ? 'loc' : 'repos';
       await this.notifyAboutIssue(issue);

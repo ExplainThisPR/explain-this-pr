@@ -71,7 +71,7 @@ export default class Github {
       return 'explain_pr_by_label';
     } else if (
       body.action === 'created' &&
-      body.comment?.body?.toLowerCase() === '@explainthispr'
+      body.comment?.body?.toLowerCase().trim() === '@explainthispr'
     ) {
       return 'explain_pr_by_comment';
     } else if (
