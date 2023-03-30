@@ -6,7 +6,7 @@ import { db } from '../firebase';
 import { PublicData } from '../types/PublicData';
 
 type Props = {};
-export default function Footer({}: Props) {
+export default function Footer(props: Props) {
   const [stats, setStats] = React.useState<PublicData | null>(null);
   React.useEffect(() => {
     const unsub = onSnapshot(doc(db, 'AdminDashboard', 'public'), (doc) => {

@@ -6,3 +6,4 @@ coverage
 tmp
 *.log
 *.cache
+github-action.json

@@ -60,15 +60,14 @@ const router = createBrowserRouter([
           </RestrictAuth>
         ),
       },
-      /*
       {
-        path: '/code-verify',
+        path: '/this-should-not-happen',
         element: (
           <RestrictGuest>
-            <CodeVerify />
+            <Success />
           </RestrictGuest>
         ),
-      },
+      } /*
       {
         path: '/home',
         element: (
@@ -76,7 +75,7 @@ const router = createBrowserRouter([
             <Home />
           </RestrictAuth>
         ),
-      },*/
+      },*/,
     ],
   },
 ]);
