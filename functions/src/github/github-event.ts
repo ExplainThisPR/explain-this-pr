@@ -23,6 +23,7 @@ export default class GithubEvents {
         return false;
       }
 
+      repoNames = repoNames.map((repo) => repo.toLowerCase());
       logger.info('[onRepoRemoved] Removing repo from user...', {
         githubId,
         repoNames,
@@ -67,6 +68,7 @@ export default class GithubEvents {
         return false;
       }
 
+      repoNames = repoNames.map((repo) => repo.toLowerCase());
       logger.info('[onRepoAdded] Adding repo to user...', {
         githubId,
         repoNames,
