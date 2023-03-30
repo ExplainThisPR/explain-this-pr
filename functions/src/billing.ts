@@ -100,12 +100,16 @@ export default class Billing {
       const body =
         issue === 'loc'
           ? [
+              '## :robot: Explain this PR :robot:',
               `You have reached the limit of ${loc_limit} lines of code for this month.`,
               `Wait until the next month to resume the service or upgrade your subscription.`,
+              'If this is a mistake, please [contact us](https://tally.so/r/3jZG9E) and we will fix it ASAP',
             ].join('\n')
           : [
+              '## :robot: Explain this PR :robot:',
               `You have reached the limit of ${repos_limit} repos.`,
               `Please remove a repo from your account to resume the service.`,
+              'If this is a mistake, please [contact us](https://tally.so/r/3jZG9E) and we will fix it ASAP',
             ].join('\n');
       await this.octokit.rest.issues.createComment({
         owner: repoOwner,
