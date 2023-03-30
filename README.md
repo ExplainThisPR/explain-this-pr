@@ -6,6 +6,7 @@
 
 - Change the playground endpoint to be name-callable + App Check to prevent abuse
 - Add an account management page for the Stripe subscription on the frontend
+- Create a CLI tool where user can just past the URL of a pull request (they) have read access to
 
 ```
 firebase functions:config:set some.key="value"
