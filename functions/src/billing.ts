@@ -86,7 +86,8 @@ export default class Billing {
       return false;
     }
 
-    return linesCount <= this.user.usage.loc_limit;
+    const current = this.user.usage.loc;
+    return linesCount + current <= this.user.usage.loc_limit;
   }
 
   private async notifyAboutIssue(issue: 'loc' | 'repos') {
