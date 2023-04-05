@@ -43,7 +43,7 @@ export default class ChatGPT {
       '## :robot: Explain this PR :robot:',
       'Here is a summary of what I noticed. I am a Bot in Beta, so I might be wrong. :smiling_face_with_tear:',
       'Please [share your feedback](https://tally.so/r/3jZG9E) with me. :heart:',
-      '---',
+      '='.repeat(10),
     ];
     if (responses.length === 0) {
       logger.error('No responses from GPT');
