@@ -24,7 +24,7 @@ function LandingPage() {
       title: 'Install the GitHub Integration',
       description:
         'The extension is free to use and takes less than 2 minutes to set up.',
-      image: 'https://i.imgur.com/1ZQ2Z9M.png',
+      image: '/images/sc1.png',
     },
     {
       title: 'Add a comment to your PR',
@@ -34,12 +34,13 @@ function LandingPage() {
           job.
         </>
       ),
-      image: 'https://i.imgur.com/1ZQ2Z9M.png',
+      image: 'images/sc2.png',
     },
     {
       title: "That's it. You're done! 🎉",
       description:
         'Our bot will post a comment with a summary of the changes in a few seconds.',
+      image: 'images/sc3.png',
     },
   ];
   const benefits = [
@@ -100,13 +101,26 @@ function LandingPage() {
           <Col sm={24} md={12}>
             <div
               style={{
-                minWidth: 250,
-                width: '100%',
-                height: 300,
-                backgroundColor: 'gray',
-                borderRadius: 4,
+                marginLeft: 50,
+                position: 'relative',
+                paddingBottom: '62.5%',
+                height: 0,
               }}
-            />
+            >
+              <iframe
+                title="Product Demo"
+                src="https://www.loom.com/embed/68f020545f0e40d3ac5a1c71b4079ef5"
+                frameBorder="0"
+                allowFullScreen
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                }}
+              />
+            </div>
           </Col>
         </Row>
       </header>
@@ -122,14 +136,10 @@ function LandingPage() {
                 {item.description}
               </Typography.Text>
               <Row>
-                <div
-                  style={{
-                    minWidth: 250,
-                    width: '100%',
-                    height: 300,
-                    backgroundColor: 'gray',
-                    borderRadius: 4,
-                  }}
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  style={{ width: '100%', minWidth: 250, borderRadius: 4 }}
                 />
               </Row>
             </Col>

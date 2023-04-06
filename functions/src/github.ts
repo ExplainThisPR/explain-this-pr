@@ -124,7 +124,7 @@ export default class Github {
         return false;
       }
 
-      if (filename.includes('icon')) {
+      if (filename.includes('icon.')) {
         return false;
       }
 
@@ -146,6 +146,7 @@ export default class Github {
       return file;
     });
 
+    logger.info('Before:', files);
     logger.info(`Files before filter: ${files.length}`);
     logger.info(`Files after filter: ${result.length}`);
     const filenames = result.map((file) => file.filename);
