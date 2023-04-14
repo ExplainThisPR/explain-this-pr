@@ -9,6 +9,7 @@ import {
   Organization as GithubOrg,
   InstallationRepositoriesAddedEvent,
   InstallationRepositoriesRemovedEvent,
+  MarketplacePurchaseEvent,
 } from '@octokit/webhooks-types';
 import { allowCors } from './helper';
 import Stripe from 'stripe';
@@ -124,6 +125,64 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
     received: true,
   });
 });
+
+export const ghMarketplaceWebhook = https.onRequest(
+  async (request, response) => {
+    const isPreflight = allowCors(request, response);
+    if (isPreflight) return;
+
+    const body = request.body as MarketplacePurchaseEvent;
+    const signature = request.header('x-hub-signature-256') || '';
+    const isValid = Github.verifySignature(JSON.stringify(body), signature);
+
+    if (!isValid) {
+      response.status(400).send({
+        message: 'The request is not authorized.',
+      });
+    }
+
+    // Find the user with the email (or create)
+    const { sender } = body;
+    const { plan } = body.marketplace_purchase;
+    const handler = new GithubEvents();
+    const user = await handler.findOrCreateUser(sender);
+
+    let success = false;
+    let message = 'Something went wrong. Marketplace event not handled.';
+
+    if (body.action === 'purchased' || body.action === 'changed') {
+      const completed = await handler.onPlanPurchased(user, plan, true);
+      const keyword = body.action === 'purchased' ? 'purchase' : 'change';
+      if (completed) {
+        success = true;
+        message = `Plan ${keyword}d successfully.`;
+      } else {
+        message = `Plan ${keyword} failed.`;
+      }
+    } else if (body.action === 'cancelled') {
+      // remove the plan and billing status for that user
+      // shoot an email to the user to ask why they cancelled
+      const completed = await handler.onPlanCancelled(user.id);
+      if (completed) {
+        success = true;
+        message = 'Plan cancelled successfully.';
+      } else {
+        message = 'Plan cancellation failed.';
+      }
+    }
+
+    if (!success) {
+      response.status(400).send({
+        message,
+      });
+    }
+
+    response.send({
+      received: true,
+      message,
+    });
+  },
+);
 
 export const processRawDiffBody = runWith({
   enforceAppCheck: true,

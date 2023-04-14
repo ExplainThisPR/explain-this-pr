@@ -3,11 +3,79 @@ import { logger } from 'firebase-functions';
 import {
   PullRequestLabeledEvent,
   IssueCommentCreatedEvent,
+  MarketplacePurchase,
+  MarketplacePurchaseEvent,
 } from '@octokit/webhooks-types';
 import Github from '../github';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export default class GithubEvents {
+  private planOptions = {
+    free: {
+      'usage.repos_limit': 1,
+      'usage.loc_limit': 25000,
+    },
+    starter: {
+      'usage.repos_limit': 4,
+      'usage.loc_limit': 100000,
+    },
+    pro: {
+      'usage.repos_limit': 30,
+      'usage.loc_limit': 1000000,
+    },
+  };
+
+  /**
+   * Updates the user document in Firestore with the new plan information
+   * @param user The user document
+   * @param plan The plan that was purchased
+   * @param firstTime True for first time purchase, false for upgrade/changes
+   * @returns
+   */
+  async onPlanPurchased(
+    user: Record<string, any>,
+    plan: MarketplacePurchase['plan'],
+    firstTime: boolean = false,
+  ) {
+    const userId = user.id;
+    try {
+      const limits = this.findUsageLimits(plan);
+      await admin
+        .firestore()
+        .doc(userId)
+        .update({
+          ...limits,
+          plan: plan.name.toLowerCase(),
+        });
+      if (firstTime) {
+        // TODO: shoot an email to the user to welcome them in
+      } else {
+        // TODO: Do something different for upgrades and changes
+      }
+      return true;
+    } catch (e) {
+      logger.error('[onPlanPurchased] Error', { userId, plan, error: e });
+      return false;
+    }
+  }
+
+  async onPlanCancelled(userId: string) {
+    try {
+      await admin
+        .firestore()
+        .doc(userId)
+        .update({
+          ...this.planOptions.free,
+          plan: 'free',
+        });
+      // TODO: shoot an email to ask why they cancelled
+      return true;
+    } catch (e) {
+      logger.error('[onPlanCancelled] Error', { userId, error: e });
+      return false;
+    }
+  }
+
   /**
    * Attempts to remove the repos from the user document in Firestore
    * @param githubId The github id of the user
@@ -88,6 +156,42 @@ export default class GithubEvents {
     }
   }
 
+  async findOrCreateUser(sender: MarketplacePurchaseEvent['sender']) {
+    try {
+      const user = await this.findUserByGithubId(sender.id);
+      if (user) {
+        return user;
+      }
+
+      logger.info('[findUserOrCreate] User not found, creating...', {
+        githubId: sender.id,
+      });
+      const newUser = admin.firestore().collection('Users').doc();
+      const data = {
+        id: 'Users/' + newUser.id,
+        uid: newUser.id,
+        photoURL: sender.avatar_url,
+        name: sender.login,
+        githubId: sender.id.toString(),
+        plan: 'free',
+        repos: [],
+        usage: {
+          repos: 0,
+          repos_limit: 0,
+          loc: 0,
+          loc_limit: 0,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await newUser.set(data);
+      return data;
+    } catch (e) {
+      logger.error('[findUserOrCreate] Error', { sender, error: e });
+      throw e;
+    }
+  }
+
   /**
    * Connect to the Github API and get the list of files in the PR
    * @param payload The Github webhook payload
@@ -126,5 +230,10 @@ export default class GithubEvents {
     }
     const user = query.docs[0].data();
     return user;
+  }
+
+  private findUsageLimits(plan: MarketplacePurchase['plan']) {
+    const planKey = plan.name.toLowerCase() as keyof typeof this.planOptions;
+    return this.planOptions[planKey] || this.planOptions.free;
   }
 }
