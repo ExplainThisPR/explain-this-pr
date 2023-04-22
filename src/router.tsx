@@ -63,6 +63,15 @@ const router = createBrowserRouter([
             <Success />
           </RestrictGuest>
         ),
+      },
+
+      {
+        path: '/admin-not-really',
+        element: (
+          <RestrictAuth>
+            <Success />
+          </RestrictAuth>
+        ),
       } /*
       {
         path: '/home',
