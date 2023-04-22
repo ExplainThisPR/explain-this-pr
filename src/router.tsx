@@ -54,11 +54,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/signup-success',
-        element: (
-          <RestrictAuth>
-            <Success />
-          </RestrictAuth>
-        ),
+        element: <Success />,
       },
       {
         path: '/this-should-not-happen',
