@@ -79,7 +79,11 @@ export default class Github {
     ) {
       return 'repo_removed';
     } else {
-      logger.warn('Request type not recognized', { action: body.action });
+      const comment = body.comment?.body?.toLowerCase().trim() || null;
+      logger.warn('Request type not recognized', {
+        action: body.action,
+        comment,
+      });
       return 'bad_request';
     }
   }
