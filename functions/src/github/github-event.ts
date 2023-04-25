@@ -46,6 +46,7 @@ export default class GithubEvents {
         .update({
           ...limits,
           plan: plan.name.toLowerCase(),
+          updatedAt: new Date().toISOString(),
         });
       if (firstTime) {
         // TODO: shoot an email to the user to welcome them in
@@ -67,6 +68,7 @@ export default class GithubEvents {
         .update({
           ...this.planOptions.free,
           plan: 'free',
+          updatedAt: new Date().toISOString(),
         });
       // TODO: shoot an email to ask why they cancelled
       return true;
@@ -102,6 +104,7 @@ export default class GithubEvents {
         .update({
           repos: FieldValue.arrayRemove(...repoNames),
           'usage.repos': FieldValue.increment(-repoNames.length),
+          updatedAt: new Date().toISOString(),
         });
       logger.info('[onRepoRemoved] Repos successfully removed from user');
       return true;
@@ -147,6 +150,7 @@ export default class GithubEvents {
         .update({
           repos: FieldValue.arrayUnion(...repoNames),
           'usage.repos': FieldValue.increment(repoNames.length),
+          updatedAt: new Date().toISOString(),
         });
       logger.info('[onRepoAdded] Repos successfully added to user');
       return true;

@@ -93,6 +93,7 @@ export const stripeWebhook = https.onRequest(async (request, response) => {
           }
         };
         await user.ref.update({
+          updatedAt: new Date().toISOString(),
           usage: getLimits(),
           stripe: {
             subscription: {

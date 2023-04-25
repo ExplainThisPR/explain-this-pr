@@ -58,6 +58,7 @@ export default class Billing {
         .doc(this.user.id)
         .update({
           'usage.loc': FieldValue.increment(linesChanged),
+          updatedAt: new Date().toISOString(),
         });
     } catch (e) {
       logger.error('Failed to update usage', e);

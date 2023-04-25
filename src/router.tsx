@@ -64,7 +64,6 @@ const router = createBrowserRouter([
           </RestrictGuest>
         ),
       },
-
       {
         path: '/admin-not-really',
         element: (
