@@ -17,4 +17,6 @@ export type RequestType =
   | 'explain_pr_by_comment'
   | 'repo_added'
   | 'repo_removed'
+  | 'comment_by_bot'
+  | 'not_handled'
   | 'bad_request';

@@ -4,9 +4,12 @@
 
 [![Functions Services](https://github.com/FrenchMajesty/explain-this-pr/actions/workflows/firebase-functions-merge.yml/badge.svg?branch=main)](https://github.com/FrenchMajesty/explain-this-pr/actions/workflows/firebase-functions-merge.yml)
 
-- Change the playground endpoint to be name-callable + App Check to prevent abuse
-- Add an account management page for the Stripe subscription on the frontend
 - Create a CLI tool where user can just past the URL of a pull request (they) have read access to
+  And get the explanation of the PR in the terminal or added directly as a comment
+
+- Add the tool as a Github Actions so it can be part of the CI/CD pipeline automatically like SonarCloud
+
+- Add an account management page for the Stripe subscription on the frontend?
 
 ```
 firebase functions:config:set some.key="value"

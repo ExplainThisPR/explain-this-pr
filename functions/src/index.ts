@@ -227,6 +227,11 @@ export const githubWebhook = https.onRequest(async (request, response) => {
       message: 'The request is not valid. Did you run the command properly?',
     });
     return;
+  } else if (eventType === 'not_handled' || eventType === 'comment_by_bot') {
+    response.status(200).send({
+      message: `Nothing to do about "${eventType}" so exit without error`,
+    });
+    return;
   }
 
   const action = body.action;

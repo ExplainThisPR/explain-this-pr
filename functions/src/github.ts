@@ -78,13 +78,18 @@ export default class Github {
       (body.repositories_removed?.length || 0) > 0
     ) {
       return 'repo_removed';
+    } else if (
+      body.action === 'created' &&
+      body.comment?.user?.type === 'Bot'
+    ) {
+      return 'comment_by_bot';
     } else {
       const comment = body.comment?.body?.toLowerCase().trim() || null;
-      logger.warn('Request type not recognized', {
+      logger.warn('Request type not handled', {
         action: body.action,
         comment,
       });
-      return 'bad_request';
+      return 'not_handled';
     }
   }
 
